@@ -107,13 +107,13 @@
 \setlength{\cftbeforechapskip}{0.22em}
 \setlength{\cftbeforesecskip}{0.02em}
 \setlength{\cftbeforesubsecskip}{0em}
-% 目录编号本身形成阶梯缩进，避免只移动标题文字。
-\cftsetindents{chapter}{0em}{5.3em}
-\cftsetindents{section}{0em}{7.2em}
-\cftsetindents{subsection}{0em}{9.1em}
+% 目录编号采用轻量阶梯缩进；编号盒保持紧凑，避免编号与标题间距过大。
+\cftsetindents{chapter}{0em}{3.8em}
+\cftsetindents{section}{0em}{4.3em}
+\cftsetindents{subsection}{0em}{5.0em}
 \renewcommand{\cftchappresnum}{}
-\renewcommand{\cftsecpresnum}{\hspace*{2.0em}}
-\renewcommand{\cftsubsecpresnum}{\hspace*{4.0em}}
+\renewcommand{\cftsecpresnum}{\hspace*{0.8em}}
+\renewcommand{\cftsubsecpresnum}{\hspace*{1.6em}}
 
 \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
 \renewcommand{\thetable}{\thechapter-\arabic{table}}
