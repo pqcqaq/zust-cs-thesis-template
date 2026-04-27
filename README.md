@@ -15,9 +15,11 @@
 ## 这个模板能做什么
 
 - 自动生成最终论文 PDF：`main.pdf`。
+- 自动生成 Word 审阅版 DOCX：`dist/毕业设计论文.docx` 或 `dist/<论文题目>.docx`。
 - 使用学校提供的 Word 固定页作为封面、出版授权书、版权使用授权书。
 - 自动把 `frontmatter/*.docx` 和 `frontmatter/*.doc` 导出为 PDF 并合并进论文。
 - 自动把 `figures/mermaid/*.mmd` 渲染成 PDF 图片。
+- 生成 DOCX 时自动把 Mermaid 图额外渲染成 PNG，便于 Word 打开和审阅。
 - 截图文件不存在时，正文会先显示截图占位框，方便你后续补图。
 - 同时提供 PowerShell 脚本和 Bash 脚本，Windows、macOS、Linux 都能走基本构建流程。
 - 字体配置带有 fallback：Windows 优先宋体/黑体，macOS 优先 Songti/Heiti，Linux 优先 Noto/Fandol。
@@ -47,6 +49,9 @@
 ├── scripts/
 │   ├── build.ps1              # Windows 一键构建
 │   ├── build.sh               # macOS/Linux 一键构建
+│   ├── build-docx.mjs         # DOCX 转换核心脚本
+│   ├── build-docx.ps1         # Windows 生成 DOCX，支持合并固定页
+│   ├── build-docx.sh          # macOS/Linux 生成正文 DOCX
 │   ├── clean.ps1              # Windows 清理临时文件
 │   ├── clean.sh               # macOS/Linux 清理临时文件
 │   ├── export-frontmatter.ps1 # Windows 使用 Word 导出固定页
@@ -117,7 +122,7 @@ latexmk --version
 
 ### 3. 安装 Node.js
 
-Node.js 用于渲染 Mermaid 图。如果你不需要 Mermaid 图，也可以暂时跳过。
+Node.js 用于渲染 Mermaid 图，也用于 DOCX 构建脚本的通用预处理。如果你只编译 PDF 且不使用 Mermaid，可以暂时跳过；如果要生成 DOCX，建议安装。
 
 如果你使用 Scoop，可以执行：
 
@@ -146,7 +151,35 @@ npx --version
 
 构建脚本会通过 `npx --yes @mermaid-js/mermaid-cli` 自动调用 Mermaid CLI，不需要你手动全局安装 Mermaid。
 
-### 4. 允许脚本运行
+### 4. 安装 Pandoc
+
+Pandoc 用于把 LaTeX 正文转换为 Word DOCX。只编译 PDF 时不需要 Pandoc；如果要使用 `build-docx`，必须安装。
+
+Windows 如果使用 Scoop，可以执行：
+
+```powershell
+scoop install pandoc
+```
+
+macOS 如果使用 Homebrew：
+
+```bash
+brew install pandoc
+```
+
+Linux 以 Ubuntu/Debian 为例：
+
+```bash
+sudo apt install pandoc
+```
+
+检查命令是否可用：
+
+```bash
+pandoc --version
+```
+
+### 5. 允许脚本运行
 
 Windows 如果运行 `.\scripts\build.ps1` 时提示“无法加载文件，因为在此系统上禁止运行脚本”，在当前用户范围内放开本地脚本执行权限：
 
@@ -207,6 +240,64 @@ main.pdf
 ```
 
 第一次构建可能比较慢，因为 MiKTeX 可能会自动安装缺失的 LaTeX 宏包，`npx` 也可能会临时下载 Mermaid CLI。
+
+## 生成 DOCX 审阅版
+
+PDF 是最终提交版式，DOCX 更适合发给导师批注或自己在 Word 中做临时修改。模板提供了单独的 DOCX 构建脚本。
+
+Windows 运行：
+
+```powershell
+.\scripts\build-docx.ps1
+```
+
+macOS/Linux 运行：
+
+```bash
+./scripts/build-docx.sh
+```
+
+默认输出位置：
+
+```text
+dist/毕业设计论文.docx
+```
+
+如果你已经把 `main.tex` 中的题目从“请在此填写毕业设计（论文）题目”改成真实题目，默认文件名会变成：
+
+```text
+dist/<论文题目>.docx
+```
+
+Windows 下如果安装了 Microsoft Word，`build-docx.ps1` 会先生成正文 DOCX，再把 `frontmatter/cover.docx`、`frontmatter/authorization.doc`、`frontmatter/copyright.doc` 合并到正文前，得到带固定页的完整审阅版。
+
+macOS/Linux 下 `build-docx.sh` 会生成可编辑正文 DOCX。固定页最终版式仍建议以 PDF 为准，因为学校固定页由 Word/LibreOffice 导出为 PDF 后合并最稳定。
+
+常用参数：
+
+```powershell
+# Windows：只生成正文，不合并封面和授权书
+.\scripts\build-docx.ps1 -NoFrontmatter
+
+# Windows：跳过 Mermaid PNG 渲染
+.\scripts\build-docx.ps1 -SkipMermaid
+
+# Windows：指定输出文件
+.\scripts\build-docx.ps1 -OutputPath dist\review.docx
+```
+
+```bash
+# macOS/Linux：只生成正文 DOCX
+./scripts/build-docx.sh --no-frontmatter
+
+# macOS/Linux：跳过 Mermaid PNG 渲染
+./scripts/build-docx.sh --skip-mermaid
+
+# macOS/Linux：指定输出文件
+./scripts/build-docx.sh --output dist/review.docx
+```
+
+需要注意：DOCX 转换会尽量保留章节、表格、图题、引用编号和截图占位，但它不是学校最终排版的替代品。正式提交仍应检查 `main.pdf`。
 
 ## 推荐写作顺序
 
@@ -443,6 +534,14 @@ macOS/Linux：
 ./scripts/build.sh --force-mermaid
 ```
 
+生成 DOCX 时，脚本会额外生成同名 PNG：
+
+```text
+figures/generated/fig-3-1.png
+```
+
+这些 PNG 是可再生构建产物，默认不纳入 Git 跟踪。
+
 ## 写表格
 
 简单表格可以参考 `chapters/body.tex` 中的 `longtable` 示例。字段较多时，建议不要把表格写得太宽。可以把字段拆成“表名、主要字段、说明”三列，或者把大表拆成多个小表。
@@ -563,6 +662,20 @@ macOS/Linux：
 ```
 
 清理脚本不会删除 `main.pdf`、Word 源文件或图片资源。
+
+生成 DOCX：
+
+Windows：
+
+```powershell
+.\scripts\build-docx.ps1
+```
+
+macOS/Linux：
+
+```bash
+./scripts/build-docx.sh
+```
 
 ## 常见问题
 

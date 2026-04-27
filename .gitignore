@@ -15,7 +15,12 @@ frontmatter/*.tmp.pdf
 
 # Optional generated Mermaid PDFs can be regenerated.
 figures/generated/*.pdf
+figures/generated/*.png
 !figures/generated/.gitkeep
+
+# Generated DOCX delivery files
+dist/
+_docx_build/
 
 # Local review artifacts
 _review*/
