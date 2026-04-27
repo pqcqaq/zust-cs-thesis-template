@@ -1,0 +1,24 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "fontFamily": "SimSun, Microsoft YaHei, Arial",
+    "primaryColor": "#eef4ff",
+    "primaryBorderColor": "#3f5f8f",
+    "primaryTextColor": "#111111",
+    "lineColor": "#3f5f8f",
+    "secondaryColor": "#f7f7f7",
+    "tertiaryColor": "#ffffff",
+    "edgeLabelBackground": "#ffffff"
+  },
+  "flowchart": {
+    "htmlLabels": true,
+    "curve": "basis"
+  },
+  "er": {
+    "layoutDirection": "TB"
+  },
+  "sequence": {
+    "showSequenceNumbers": false,
+    "mirrorActors": false
+  }
+}

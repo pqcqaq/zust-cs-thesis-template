@@ -1,0 +1,22 @@
+{
+  "pages": [
+    {
+      "name": "cover",
+      "title": "毕业设计论文封面",
+      "source": "cover.docx",
+      "target": "cover.pdf"
+    },
+    {
+      "name": "authorization",
+      "title": "浙江科技大学学位论文出版授权书",
+      "source": "authorization.docx",
+      "target": "authorization.pdf"
+    },
+    {
+      "name": "copyright",
+      "title": "浙江科技大学毕业设计（论文）、学位论文版权使用授权书",
+      "source": "copyright.docx",
+      "target": "copyright.pdf"
+    }
+  ]
+}

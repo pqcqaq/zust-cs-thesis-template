@@ -1,0 +1,26 @@
+# LaTeX temporary files
+main.pdf
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.xdv
+*.synctex.gz
+
+# Generated frontmatter PDFs
+frontmatter/*.pdf
+frontmatter/*.tmp.pdf
+
+# Optional generated Mermaid PDFs can be regenerated.
+figures/generated/*.pdf
+!figures/generated/.gitkeep
+
+# Local review artifacts
+_review*/
+
+# OS/editor files
+Thumbs.db
+.DS_Store
+~$*
