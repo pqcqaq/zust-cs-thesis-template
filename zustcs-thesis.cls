@@ -29,10 +29,22 @@
 \hypersetup{hidelinks}
 \sloppy
 \raggedbottom
-\setmainfont{Times New Roman}
-\setCJKmainfont{SimSun}
-\setCJKsansfont{SimHei}
-\setCJKmonofont{FangSong}
+\IfFontExistsTF{Times New Roman}{\setmainfont{Times New Roman}}{\setmainfont{TeX Gyre Termes}}
+\IfFontExistsTF{SimSun}{\setCJKmainfont{SimSun}}{%
+  \IfFontExistsTF{Songti SC}{\setCJKmainfont{Songti SC}}{%
+    \IfFontExistsTF{Noto Serif CJK SC}{\setCJKmainfont{Noto Serif CJK SC}}{\setCJKmainfont{FandolSong-Regular}}%
+  }%
+}
+\IfFontExistsTF{SimHei}{\setCJKsansfont{SimHei}}{%
+  \IfFontExistsTF{Heiti SC}{\setCJKsansfont{Heiti SC}}{%
+    \IfFontExistsTF{Noto Sans CJK SC}{\setCJKsansfont{Noto Sans CJK SC}}{\setCJKsansfont{FandolHei-Regular}}%
+  }%
+}
+\IfFontExistsTF{FangSong}{\setCJKmonofont{FangSong}}{%
+  \IfFontExistsTF{STFangsong}{\setCJKmonofont{STFangsong}}{%
+    \IfFontExistsTF{Noto Serif CJK SC}{\setCJKmonofont{Noto Serif CJK SC}}{\setCJKmonofont{FandolFang-Regular}}%
+  }%
+}
 
 \newcommand{\thesisHeaderText}{浙江科技大学计算机科学与技术学院2026届本科毕业设计（论文）}
 \newcommand{\setthesisheader}[1]{\renewcommand{\thesisHeaderText}{#1}}

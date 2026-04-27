@@ -11,6 +11,8 @@
 - 自动把 `frontmatter/*.docx` 和 `frontmatter/*.doc` 导出为 PDF 并合并进论文。
 - 自动把 `figures/mermaid/*.mmd` 渲染成 PDF 图片。
 - 截图文件不存在时，正文会先显示截图占位框，方便你后续补图。
+- 同时提供 PowerShell 脚本和 Bash 脚本，Windows、macOS、Linux 都能走基本构建流程。
+- 字体配置带有 fallback：Windows 优先宋体/黑体，macOS 优先 Songti/Heiti，Linux 优先 Noto/Fandol。
 - 保留一个干净的通用论文结构，不包含学生个人信息和真实论文正文。
 
 ## 目录结构
@@ -35,44 +37,75 @@
 │   ├── generated/             # Mermaid 渲染后的 PDF
 │   └── screenshots/           # 软件截图
 ├── scripts/
-│   ├── build.ps1              # 一键构建
-│   ├── clean.ps1              # 清理临时文件
-│   ├── export-frontmatter.ps1 # Word 固定页导出
-│   ├── render-mermaid.ps1     # Mermaid 渲染
-│   └── run-xelatex.ps1        # latexmk 调用的 XeLaTeX 包装脚本
+│   ├── build.ps1              # Windows 一键构建
+│   ├── build.sh               # macOS/Linux 一键构建
+│   ├── clean.ps1              # Windows 清理临时文件
+│   ├── clean.sh               # macOS/Linux 清理临时文件
+│   ├── export-frontmatter.ps1 # Windows 使用 Word 导出固定页
+│   ├── export-frontmatter.sh  # macOS/Linux 使用 LibreOffice 导出固定页
+│   ├── render-mermaid.ps1     # Windows Mermaid 渲染
+│   ├── render-mermaid.sh      # macOS/Linux Mermaid 渲染
+│   ├── run-xelatex.ps1        # Windows latexmk 调用的 XeLaTeX 包装脚本
+│   └── run-xelatex.sh         # macOS/Linux latexmk 调用的 XeLaTeX 包装脚本
 └── .latexmkrc                 # latexmk 配置
 ```
 
 ## 从 0 开始：先准备环境
 
-本模板主要面向 Windows 环境。原因是学校固定页是 Word 文件，脚本需要通过 Microsoft Word 导出 PDF。
+本模板支持 Windows、macOS 和 Linux。不同系统的主要差别在固定页导出：Windows 使用 Microsoft Word，macOS/Linux 使用 LibreOffice。
 
-如果你已经安装过 Word、MiKTeX、Node.js 和 latexmk，可以直接跳到“获取模板”。
+如果你已经安装过 LaTeX、Node.js 和固定页导出工具，可以直接跳到“获取模板”。
 
-### 1. 安装 Microsoft Word
+### 1. 安装固定页导出工具
 
 固定页来自学校 Word 模板。构建脚本会调用 Word 把 `frontmatter/cover.docx`、`frontmatter/authorization.doc`、`frontmatter/copyright.doc` 导出成 PDF。
 
-如果电脑没有 Word，正式版固定页无法自动导出。你仍然可以先写正文，但最终提交前建议在有 Word 的 Windows 电脑上完整构建一次。
+Windows 推荐安装 Microsoft Word。学校模板本来就是 Word 文件，Word 导出的版式最稳。
+
+macOS 可以安装 LibreOffice：
+
+```bash
+brew install --cask libreoffice
+```
+
+Linux 可以安装 LibreOffice：
+
+```bash
+sudo apt install libreoffice
+```
+
+这里需要特别说明：LibreOffice 能完成自动导出，但 Word 文档在不同软件中的排版可能有轻微差异。正式提交前，如果学校对固定页格式要求很严格，建议最后仍在 Windows + Microsoft Word 环境完整构建并检查一次。
 
 ### 2. 安装 LaTeX
 
-推荐安装 MiKTeX 或 TeX Live。Windows 下推荐 MiKTeX。
+Windows 推荐 MiKTeX。macOS 推荐 MacTeX。Linux 推荐 TeX Live。
 
-如果你使用 Scoop，可以执行：
+Windows 如果使用 Scoop，可以执行：
 
 ```powershell
 scoop install miktex perl
 ```
 
-安装后打开一个新的 PowerShell，检查命令是否可用：
+macOS 如果使用 Homebrew，可以执行：
 
-```powershell
+```bash
+brew install --cask mactex
+```
+
+Linux 以 Ubuntu/Debian 为例：
+
+```bash
+sudo apt install texlive-xetex texlive-latex-extra latexmk fonts-noto-cjk
+```
+
+安装后打开一个新的终端或 PowerShell，检查命令是否可用：
+
+```bash
 xelatex --version
 latexmk --version
 ```
 
-如果 `latexmk` 不存在，需要安装 Perl 或启用 MiKTeX 的相关包。模板使用 `latexmk` 做多轮编译，它会自动处理目录、页码和交叉引用。
+如果 `latexmk` 不存在，需要补装 `latexmk` 或 Perl。模板使用 `latexmk` 做多轮编译，它会自动处理目录、页码和交叉引用。
 
 ### 3. 安装 Node.js
 
@@ -84,18 +117,31 @@ Node.js 用于渲染 Mermaid 图。如果你不需要 Mermaid 图，也可以暂
 scoop install nodejs-lts
 ```
 
+macOS 如果使用 Homebrew：
+
+```bash
+brew install node
+```
+
+Linux 以 Ubuntu/Debian 为例：
+
+```bash
+sudo apt install nodejs npm
+```
+
 然后检查：
 
-```powershell
+```bash
 node --version
 npx --version
 ```
 
 构建脚本会通过 `npx --yes @mermaid-js/mermaid-cli` 自动调用 Mermaid CLI，不需要你手动全局安装 Mermaid。
 
-### 4. 允许 PowerShell 运行本地脚本
+### 4. 允许脚本运行
 
-如果运行 `.\scripts\build.ps1` 时提示“无法加载文件，因为在此系统上禁止运行脚本”，在当前用户范围内放开本地脚本执行权限：
+Windows 如果运行 `.\scripts\build.ps1` 时提示“无法加载文件，因为在此系统上禁止运行脚本”，在当前用户范围内放开本地脚本执行权限：
+
 
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
@@ -103,20 +149,26 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 执行后重新打开 PowerShell，再进入模板目录构建。
 
+macOS/Linux 如果脚本没有执行权限，执行：
+
+```bash
+chmod +x scripts/*.sh
+```
+
 ## 获取模板
 
 如果模板已经在你的电脑上，直接进入模板目录即可。
 
 如果模板在 Git 仓库中，使用：
 
-```powershell
+```bash
 git clone <仓库地址> zust-cs-thesis-template
 cd zust-cs-thesis-template
 ```
 
-如果你拿到的是压缩包，先解压，然后在 PowerShell 中进入解压后的目录：
+如果你拿到的是压缩包，先解压，然后在终端或 PowerShell 中进入解压后的目录：
 
-```powershell
+```bash
 cd path\to\zust-cs-thesis-template
 ```
 
@@ -124,14 +176,20 @@ cd path\to\zust-cs-thesis-template
 
 进入模板目录：
 
-```powershell
+```bash
 cd path\to\zust-cs-thesis-template
 ```
 
-运行一键构建：
+Windows 运行：
 
 ```powershell
 .\scripts\build.ps1
+```
+
+macOS/Linux 运行：
+
+```bash
+./scripts/build.sh
 ```
 
 成功后会生成：
@@ -146,7 +204,7 @@ main.pdf
 
 不要一开始就改格式文件。建议按下面顺序写：
 
-1. 先运行 `.\scripts\build.ps1`，确认空模板能生成 `main.pdf`。
+1. 先运行 `.\scripts\build.ps1` 或 `./scripts/build.sh`，确认空模板能生成 `main.pdf`。
 2. 修改 `main.tex` 中的封面字段。
 3. 修改 `frontmatter/` 里的学校固定页 Word 文件。
 4. 写中文摘要和英文摘要。
@@ -205,11 +263,19 @@ frontmatter/copyright.doc
 
 修改后重新构建：
 
+Windows：
+
 ```powershell
 .\scripts\build.ps1 -ForceFrontmatter
 ```
 
-`-ForceFrontmatter` 会强制重新导出固定页 PDF。
+macOS/Linux：
+
+```bash
+./scripts/build.sh --force-frontmatter
+```
+
+该参数会强制重新导出固定页 PDF。
 
 ## 写摘要
 
@@ -357,8 +423,16 @@ figures/generated/fig-3-1.pdf
 
 强制重新渲染 Mermaid：
 
+Windows：
+
 ```powershell
 .\scripts\build.ps1 -ForceMermaid
+```
+
+macOS/Linux：
+
+```bash
+./scripts/build.sh --force-mermaid
 ```
 
 ## 写表格
@@ -412,35 +486,75 @@ chapters/references.tex
 
 完整构建：
 
+Windows：
+
 ```powershell
 .\scripts\build.ps1
 ```
 
+macOS/Linux：
+
+```bash
+./scripts/build.sh
+```
+
 强制重新导出固定页：
+
+Windows：
 
 ```powershell
 .\scripts\build.ps1 -ForceFrontmatter
 ```
 
+macOS/Linux：
+
+```bash
+./scripts/build.sh --force-frontmatter
+```
+
 强制重新渲染 Mermaid：
+
+Windows：
 
 ```powershell
 .\scripts\build.ps1 -ForceMermaid
 ```
 
+macOS/Linux：
+
+```bash
+./scripts/build.sh --force-mermaid
+```
+
 只编译 LaTeX，不导出固定页、不渲染 Mermaid：
+
+Windows：
 
 ```powershell
 .\scripts\build.ps1 -SkipFrontmatter -SkipMermaid
 ```
 
+macOS/Linux：
+
+```bash
+./scripts/build.sh --skip-frontmatter --skip-mermaid
+```
+
 清理临时文件：
+
+Windows：
 
 ```powershell
 .\scripts\clean.ps1
 ```
 
-`clean.ps1` 不会删除 `main.pdf`、Word 源文件或图片资源。
+macOS/Linux：
+
+```bash
+./scripts/clean.sh
+```
+
+清理脚本不会删除 `main.pdf`、Word 源文件或图片资源。
 
 ## 常见问题
 
@@ -448,7 +562,7 @@ chapters/references.tex
 
 说明没有安装 `latexmk`，或者命令没有进入 PATH。先检查：
 
-```powershell
+```bash
 latexmk --version
 ```
 
@@ -456,9 +570,9 @@ latexmk --version
 
 ### 2. 提示 `xelatex not found`
 
-说明 LaTeX 没装好，或者 PATH 没生效。重新打开 PowerShell 后再检查：
+说明 LaTeX 没装好，或者 PATH 没生效。重新打开终端或 PowerShell 后再检查：
 
-```powershell
+```bash
 xelatex --version
 ```
 
@@ -466,8 +580,16 @@ xelatex --version
 
 如果你改了 Word 文件，但 PDF 里没变化，执行：
 
+Windows：
+
 ```powershell
 .\scripts\build.ps1 -ForceFrontmatter
+```
+
+macOS/Linux：
+
+```bash
+./scripts/build.sh --force-frontmatter
 ```
 
 同时确认 Word 文件已经保存并关闭。
@@ -476,15 +598,23 @@ xelatex --version
 
 先检查：
 
-```powershell
+```bash
 node --version
 npx --version
 ```
 
 然后强制重新渲染：
 
+Windows：
+
 ```powershell
 .\scripts\build.ps1 -ForceMermaid
+```
+
+macOS/Linux：
+
+```bash
+./scripts/build.sh --force-mermaid
 ```
 
 如果仍失败，先检查 `.mmd` 文件语法。可以临时让正文显示 Mermaid 源码，但正式提交前应生成真实图片。
@@ -505,14 +635,26 @@ figures\screenshots\example.png
 
 ### 6. 中文字体报错
 
-模板默认使用 Windows 常见字体，如宋体、黑体、仿宋、Times New Roman。请尽量在 Windows 上编译。如果在其他系统编译，需要自行调整 `zustcs-thesis.cls` 中的字体配置。
+模板会自动尝试多组字体。Windows 优先使用宋体、黑体、仿宋、Times New Roman；macOS 会尝试 Songti SC、Heiti SC；Linux 会尝试 Noto CJK 或 Fandol 字体。如果 Linux 中文字体缺失，安装：
+
+```bash
+sudo apt install fonts-noto-cjk
+```
 
 ### 7. PDF 页码或目录不对
 
 重新运行：
 
+Windows：
+
 ```powershell
 .\scripts\build.ps1
+```
+
+macOS/Linux：
+
+```bash
+./scripts/build.sh
 ```
 
 `latexmk` 会自动多轮编译。不要只运行一次 `xelatex`。
@@ -544,7 +686,9 @@ Mermaid 图是否已经渲染为 PDF
 zustcs-thesis.cls
 .latexmkrc
 scripts/run-xelatex.ps1
+scripts/run-xelatex.sh
 scripts/export-frontmatter.ps1
+scripts/export-frontmatter.sh
 ```
 
 如果只是写论文，主要修改：
@@ -562,6 +706,8 @@ figures/screenshots/*
 
 如果你只想快速开始，可以记住这 5 步：
 
+Windows：
+
 ```powershell
 # 1. 进入模板目录
 cd path\to\zust-cs-thesis-template
@@ -575,6 +721,23 @@ cd path\to\zust-cs-thesis-template
 
 # 5. 再次生成最终 PDF
 .\scripts\build.ps1 -ForceFrontmatter -ForceMermaid
+```
+
+macOS/Linux：
+
+```bash
+# 1. 进入模板目录
+cd path/to/zust-cs-thesis-template
+
+# 2. 先编译一次，确认环境可用
+./scripts/build.sh
+
+# 3. 修改 main.tex、chapters/*.tex 和 frontmatter/*.docx
+
+# 4. 放入截图和 Mermaid 图
+
+# 5. 再次生成最终 PDF
+./scripts/build.sh --force-frontmatter --force-mermaid
 ```
 
 最终提交时，以生成的 `main.pdf` 为准。
