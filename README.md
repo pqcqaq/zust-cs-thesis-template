@@ -18,7 +18,7 @@
 ## 使用方式
 
 1. 修改 `main.tex` 中的题目、学院、专业、班级、学号、姓名、导师、职称和完成日期。
-2. 用学校官方 Word 模板替换 `frontmatter/*.docx`，或直接编辑当前占位文件。
+2. 编辑 `frontmatter/cover.docx`、`frontmatter/authorization.doc` 和 `frontmatter/copyright.doc`。这些文件已保留学校官方固定页样式，只需填写个人字段。
 3. 修改 `chapters/*.tex` 中的摘要、正文、致谢和参考文献。
 4. 将 Mermaid 图源码放入 `figures/mermaid/`，将软件截图放入 `figures/screenshots/`。
 5. 运行构建命令生成最终 PDF。
@@ -46,7 +46,7 @@ latexmk -xelatex main.tex
 
 ## 固定页说明
 
-`frontmatter/*.pdf` 是构建产物，不纳入 Git 跟踪。修改 Word 源文件后重新运行 `.\scripts\build.ps1` 即可自动更新。
+`frontmatter/*.pdf` 是构建产物，不纳入 Git 跟踪。修改 Word 源文件后重新运行 `.\scripts\build.ps1` 即可自动更新。模板仓库跟踪的是学校固定页 Word 源文件，以保证封面和授权书样式与学校要求一致。
 
 ## 清理
 

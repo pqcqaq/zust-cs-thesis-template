@@ -9,13 +9,13 @@
     {
       "name": "authorization",
       "title": "浙江科技大学学位论文出版授权书",
-      "source": "authorization.docx",
+      "source": "authorization.doc",
       "target": "authorization.pdf"
     },
     {
       "name": "copyright",
       "title": "浙江科技大学毕业设计（论文）、学位论文版权使用授权书",
-      "source": "copyright.docx",
+      "source": "copyright.doc",
       "target": "copyright.pdf"
     }
   ]
