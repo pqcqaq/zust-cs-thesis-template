@@ -4,6 +4,14 @@
 
 如果你从来没有写过 LaTeX，也可以按本文档一步一步操作。建议先不要改样式，先把模板编译成功，再逐步替换自己的论文内容。
 
+## 效果预览
+
+以下图片由模板当前输出的 `main.pdf` 导出，展示封面、目录和正文页的大致效果。
+
+| 封面 | 目录 | 正文 |
+| --- | --- | --- |
+| <img src="docs/images/preview-cover.png" alt="封面预览" width="260"> | <img src="docs/images/preview-toc.png" alt="目录预览" width="260"> | <img src="docs/images/preview-body.png" alt="正文预览" width="260"> |
+
 ## 这个模板能做什么
 
 - 自动生成最终论文 PDF：`main.pdf`。
