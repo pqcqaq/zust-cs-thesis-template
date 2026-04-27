@@ -1,57 +1,580 @@
-# ZUST Computer College Thesis LaTeX Template
+# ZUST 计算机学院本科毕业设计（论文）LaTeX 模板
 
-浙江科技大学计算机学院本科毕业设计（论文）LaTeX 模板。
+这是一个面向浙江科技大学计算机学院本科毕业设计（论文）的 LaTeX 模板。模板已经内置学校固定页、正文页眉页脚、摘要、目录、章节标题、图表、代码块、Mermaid 图和截图占位等常用结构。
 
-本仓库由一个已完成论文项目抽取结构后清理而来，只保留通用版式、构建脚本和占位内容，不包含任何学生个人信息、课题内容或真实论文正文。
+如果你从来没有写过 LaTeX，也可以按本文档一步一步操作。建议先不要改样式，先把模板编译成功，再逐步替换自己的论文内容。
+
+## 这个模板能做什么
+
+- 自动生成最终论文 PDF：`main.pdf`。
+- 使用学校提供的 Word 固定页作为封面、出版授权书、版权使用授权书。
+- 自动把 `frontmatter/*.docx` 和 `frontmatter/*.doc` 导出为 PDF 并合并进论文。
+- 自动把 `figures/mermaid/*.mmd` 渲染成 PDF 图片。
+- 截图文件不存在时，正文会先显示截图占位框，方便你后续补图。
+- 保留一个干净的通用论文结构，不包含学生个人信息和真实论文正文。
 
 ## 目录结构
 
-- `main.tex`：论文入口。
-- `zustcs-thesis.cls`：论文格式类文件。
-- `chapters/`：摘要、正文、致谢、参考文献等章节文件。
-- `frontmatter/`：封面和授权书 Word 源文件及导出清单。
-- `figures/mermaid/`：Mermaid 图源码。
-- `figures/generated/`：Mermaid 渲染后的 PDF 输出目录。
-- `figures/screenshots/`：系统截图目录。
-- `scripts/`：固定页导出、Mermaid 渲染、LaTeX 编译和清理脚本。
+```text
+.
+├── main.tex                  # 论文入口，填写封面信息，组织各章节
+├── zustcs-thesis.cls          # 学校论文格式类文件，一般不要改
+├── chapters/
+│   ├── abstract-cn.tex        # 中文摘要
+│   ├── abstract-en.tex        # 英文摘要
+│   ├── body.tex               # 正文主体
+│   ├── acknowledgements.tex   # 致谢
+│   └── references.tex         # 参考文献
+├── frontmatter/
+│   ├── cover.docx             # 学校官方封面 Word 模板
+│   ├── authorization.doc      # 学位论文出版授权书
+│   ├── copyright.doc          # 版权使用授权书
+│   └── frontmatter.json       # 固定页导出清单
+├── figures/
+│   ├── mermaid/               # Mermaid 图源码
+│   ├── generated/             # Mermaid 渲染后的 PDF
+│   └── screenshots/           # 软件截图
+├── scripts/
+│   ├── build.ps1              # 一键构建
+│   ├── clean.ps1              # 清理临时文件
+│   ├── export-frontmatter.ps1 # Word 固定页导出
+│   ├── render-mermaid.ps1     # Mermaid 渲染
+│   └── run-xelatex.ps1        # latexmk 调用的 XeLaTeX 包装脚本
+└── .latexmkrc                 # latexmk 配置
+```
 
-## 使用方式
+## 从 0 开始：先准备环境
 
-1. 修改 `main.tex` 中的题目、学院、专业、班级、学号、姓名、导师、职称和完成日期。
-2. 编辑 `frontmatter/cover.docx`、`frontmatter/authorization.doc` 和 `frontmatter/copyright.doc`。这些文件已保留学校官方固定页样式，只需填写个人字段。
-3. 修改 `chapters/*.tex` 中的摘要、正文、致谢和参考文献。
-4. 将 Mermaid 图源码放入 `figures/mermaid/`，将软件截图放入 `figures/screenshots/`。
-5. 运行构建命令生成最终 PDF。
+本模板主要面向 Windows 环境。原因是学校固定页是 Word 文件，脚本需要通过 Microsoft Word 导出 PDF。
+
+如果你已经安装过 Word、MiKTeX、Node.js 和 latexmk，可以直接跳到“获取模板”。
+
+### 1. 安装 Microsoft Word
+
+固定页来自学校 Word 模板。构建脚本会调用 Word 把 `frontmatter/cover.docx`、`frontmatter/authorization.doc`、`frontmatter/copyright.doc` 导出成 PDF。
+
+如果电脑没有 Word，正式版固定页无法自动导出。你仍然可以先写正文，但最终提交前建议在有 Word 的 Windows 电脑上完整构建一次。
+
+### 2. 安装 LaTeX
+
+推荐安装 MiKTeX 或 TeX Live。Windows 下推荐 MiKTeX。
+
+如果你使用 Scoop，可以执行：
+
+```powershell
+scoop install miktex perl
+```
+
+安装后打开一个新的 PowerShell，检查命令是否可用：
+
+```powershell
+xelatex --version
+latexmk --version
+```
+
+如果 `latexmk` 不存在，需要安装 Perl 或启用 MiKTeX 的相关包。模板使用 `latexmk` 做多轮编译，它会自动处理目录、页码和交叉引用。
+
+### 3. 安装 Node.js
+
+Node.js 用于渲染 Mermaid 图。如果你不需要 Mermaid 图，也可以暂时跳过。
+
+如果你使用 Scoop，可以执行：
+
+```powershell
+scoop install nodejs-lts
+```
+
+然后检查：
+
+```powershell
+node --version
+npx --version
+```
+
+构建脚本会通过 `npx --yes @mermaid-js/mermaid-cli` 自动调用 Mermaid CLI，不需要你手动全局安装 Mermaid。
+
+### 4. 允许 PowerShell 运行本地脚本
+
+如果运行 `.\scripts\build.ps1` 时提示“无法加载文件，因为在此系统上禁止运行脚本”，在当前用户范围内放开本地脚本执行权限：
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+执行后重新打开 PowerShell，再进入模板目录构建。
+
+## 获取模板
+
+如果模板已经在你的电脑上，直接进入模板目录即可。
+
+如果模板在 Git 仓库中，使用：
+
+```powershell
+git clone <仓库地址> zust-cs-thesis-template
+cd zust-cs-thesis-template
+```
+
+如果你拿到的是压缩包，先解压，然后在 PowerShell 中进入解压后的目录：
+
+```powershell
+cd path\to\zust-cs-thesis-template
+```
+
+## 第一次编译
+
+进入模板目录：
+
+```powershell
+cd path\to\zust-cs-thesis-template
+```
+
+运行一键构建：
 
 ```powershell
 .\scripts\build.ps1
 ```
 
-也可以直接运行：
+成功后会生成：
 
-```powershell
-latexmk -xelatex main.tex
+```text
+main.pdf
 ```
 
-`.latexmkrc` 会调用 `scripts/run-xelatex.ps1`，因此直接运行 `latexmk` 时也会先检查固定页 PDF 和 Mermaid 图片。
+第一次构建可能比较慢，因为 MiKTeX 可能会自动安装缺失的 LaTeX 宏包，`npx` 也可能会临时下载 Mermaid CLI。
 
-## 依赖
+## 推荐写作顺序
 
-- Microsoft Word：用于把 `frontmatter/*.docx` 导出为 PDF。
-- MiKTeX 或 TeX Live：用于 XeLaTeX 编译。
-- Perl 与 latexmk：用于多轮编译。
-- Node.js 与 npx：用于 Mermaid 图渲染。
+不要一开始就改格式文件。建议按下面顺序写：
 
-如果暂时无法渲染 Mermaid 图，正文会回退显示 `.mmd` 源码。正式提交前建议确保图已渲染为 PDF。
+1. 先运行 `.\scripts\build.ps1`，确认空模板能生成 `main.pdf`。
+2. 修改 `main.tex` 中的封面字段。
+3. 修改 `frontmatter/` 里的学校固定页 Word 文件。
+4. 写中文摘要和英文摘要。
+5. 按章节替换 `chapters/body.tex`。
+6. 放入系统截图和 Mermaid 图。
+7. 整理参考文献。
+8. 最后完整编译并检查 PDF。
 
-## 固定页说明
+## 修改封面和固定页
 
-`frontmatter/*.pdf` 是构建产物，不纳入 Git 跟踪。修改 Word 源文件后重新运行 `.\scripts\build.ps1` 即可自动更新。模板仓库跟踪的是学校固定页 Word 源文件，以保证封面和授权书样式与学校要求一致。
+### 1. 修改 `main.tex`
 
-## 清理
+打开 `main.tex`，找到：
+
+```tex
+\makethesiscover
+  {请在此填写毕业设计（论文）题目}
+  {请填写学院名称}
+  {请填写专业名称}
+  {请填写班级}
+  {请填写学号}
+  {请填写学生姓名}
+  {请填写指导教师}
+  {请填写教师职称}
+  {请填写完成日期}
+```
+
+把占位文字改成自己的信息。例如：
+
+```tex
+\makethesiscover
+  {某某系统的设计与实现}
+  {计算机科学与技术学院}
+  {软件工程}
+  {软件工程XXXX}
+  {XXXXXXXXXX}
+  {张三}
+  {李四}
+  {讲师}
+  {2026年5月}
+```
+
+这里的信息主要用于没有固定页 PDF 时的备用封面。正式提交时，建议同时修改 `frontmatter/cover.docx`，因为学校固定页以 Word 模板导出的 PDF 为准。
+
+### 2. 修改 `frontmatter/` 里的 Word 文件
+
+打开这些文件，按学校要求填写个人信息：
+
+```text
+frontmatter/cover.docx
+frontmatter/authorization.doc
+frontmatter/copyright.doc
+```
+
+不要随意改动固定页的字体、缩进、段落、签名位置和页面顺序。只填写必要字段。
+
+修改后重新构建：
+
+```powershell
+.\scripts\build.ps1 -ForceFrontmatter
+```
+
+`-ForceFrontmatter` 会强制重新导出固定页 PDF。
+
+## 写摘要
+
+中文摘要在：
+
+```text
+chapters/abstract-cn.tex
+```
+
+英文摘要在：
+
+```text
+chapters/abstract-en.tex
+```
+
+中文摘要示例结构：
+
+```tex
+\abstractparagraph{第一段写研究背景、问题和目标。}
+
+\abstractparagraph{第二段写系统设计、主要技术和实现结果。}
+
+\keywords{关键词一；关键词二；关键词三；关键词四}
+```
+
+摘要不要写成“第 1 章介绍了什么”。摘要应直接概括你的工作：为什么做、做了什么、怎么做、结果如何。
+
+## 写正文
+
+正文主要写在：
+
+```text
+chapters/body.tex
+```
+
+模板已经给出常见本科论文结构：
+
+```text
+第1章 绪论
+第2章 系统需求分析
+第3章 系统总体设计
+第4章 系统详细设计与实现
+第5章 系统测试与结果分析
+第6章 总结与展望
+```
+
+你可以直接替换每一节的占位文字。常用命令如下：
+
+```tex
+\chapter{系统需求分析}
+\section{功能需求}
+\subsection{用户管理需求}
+```
+
+第 4 章通常应写得最详细。建议每个核心模块至少包含：
+
+```text
+模块用途
+业务流程
+关键页面截图
+核心实现说明
+必要的代码片段
+测试或运行结果
+```
+
+## 插入图片
+
+普通图片可以放到：
+
+```text
+figures/screenshots/
+```
+
+然后在正文中使用：
+
+```tex
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/screenshots/example.png}
+\caption{示例页面}
+\label{fig:example}
+\end{figure}
+```
+
+引用图片时写：
+
+```tex
+如图~\ref{fig:example} 所示，系统页面包括查询区和数据列表。
+```
+
+## 使用截图占位
+
+模板提供了截图占位命令：
+
+```tex
+\renderscreenshot{4-1}{screenshot-module-page.png}{核心功能页面截图占位}{请填写页面或功能来源}
+```
+
+含义如下：
+
+```text
+4-1                         # 图编号标签的一部分
+screenshot-module-page.png  # 需要放入 figures/screenshots/ 的文件名
+核心功能页面截图占位        # 图题
+请填写页面或功能来源        # 占位框里显示的说明
+```
+
+当 `figures/screenshots/screenshot-module-page.png` 不存在时，PDF 中会显示占位框。当你把同名截图放进去后，重新编译即可自动替换成真实截图。
+
+## 使用 Mermaid 图
+
+Mermaid 源文件放在：
+
+```text
+figures/mermaid/
+```
+
+例如：
+
+```text
+figures/mermaid/fig-3-1.mmd
+```
+
+构建时会自动生成：
+
+```text
+figures/generated/fig-3-1.pdf
+```
+
+正文中可以这样写：
+
+```tex
+\begin{figure}[H]
+\centering
+\IfFileExists{figures/generated/fig-3-1.pdf}{\includegraphics[width=0.82\textwidth]{figures/generated/fig-3-1.pdf}}{%
+\begin{minipage}{0.9\textwidth}
+\lstinputlisting[style=mermaid]{figures/mermaid/fig-3-1.mmd}
+\end{minipage}}
+\caption{系统总体架构}
+\label{fig:3-1}
+\end{figure}
+```
+
+如果 Mermaid 渲染失败，模板会退回显示 `.mmd` 源码，方便你先继续写正文。正式提交前建议确保 Mermaid 图已经渲染为 PDF。
+
+强制重新渲染 Mermaid：
+
+```powershell
+.\scripts\build.ps1 -ForceMermaid
+```
+
+## 写表格
+
+简单表格可以参考 `chapters/body.tex` 中的 `longtable` 示例。字段较多时，建议不要把表格写得太宽。可以把字段拆成“表名、主要字段、说明”三列，或者把大表拆成多个小表。
+
+表格引用示例：
+
+```tex
+如表~\ref{tab:3-1} 所示，系统核心数据表包括用户表、业务记录表和操作日志表。
+```
+
+## 写代码片段
+
+代码片段用于说明关键逻辑，不要把整个项目源码都贴进论文。
+
+```tex
+\begin{lstlisting}[style=thesiscode,language=python]
+def validate_status(status: str) -> bool:
+    allowed = {"draft", "processing", "finished"}
+    return status in allowed
+\end{lstlisting}
+```
+
+如果代码里有下划线、反斜杠、百分号等特殊字符，优先放在 `lstlisting` 环境里，少直接写在正文里。
+
+## 写参考文献
+
+参考文献在：
+
+```text
+chapters/references.tex
+```
+
+示例：
+
+```tex
+\bibitem{ref1} 作者. 文献题名[J]. 期刊名, 年份, 卷(期): 起止页码.
+\bibitem{ref2} Author A, Author B. Article title[J]. Journal Name, Year, Volume(Issue): pages.
+```
+
+正文引用：
+
+```tex
+相关研究为本文系统架构设计提供了参考\cite{ref1}。
+```
+
+建议用 Zotero 管理文献，再把最终参考文献条目整理到 `references.tex`。不要编造文献，不确定的文献不要放进最终稿。
+
+## 常用构建命令
+
+完整构建：
+
+```powershell
+.\scripts\build.ps1
+```
+
+强制重新导出固定页：
+
+```powershell
+.\scripts\build.ps1 -ForceFrontmatter
+```
+
+强制重新渲染 Mermaid：
+
+```powershell
+.\scripts\build.ps1 -ForceMermaid
+```
+
+只编译 LaTeX，不导出固定页、不渲染 Mermaid：
+
+```powershell
+.\scripts\build.ps1 -SkipFrontmatter -SkipMermaid
+```
+
+清理临时文件：
 
 ```powershell
 .\scripts\clean.ps1
 ```
 
-该命令只清理 LaTeX 临时文件，不删除 `main.pdf`、Word 源文件或图像资源。
+`clean.ps1` 不会删除 `main.pdf`、Word 源文件或图片资源。
+
+## 常见问题
+
+### 1. 提示 `latexmk not found`
+
+说明没有安装 `latexmk`，或者命令没有进入 PATH。先检查：
+
+```powershell
+latexmk --version
+```
+
+如果不可用，安装 MiKTeX/TeX Live，并确认 Perl 和 latexmk 可用。
+
+### 2. 提示 `xelatex not found`
+
+说明 LaTeX 没装好，或者 PATH 没生效。重新打开 PowerShell 后再检查：
+
+```powershell
+xelatex --version
+```
+
+### 3. 固定页没有更新
+
+如果你改了 Word 文件，但 PDF 里没变化，执行：
+
+```powershell
+.\scripts\build.ps1 -ForceFrontmatter
+```
+
+同时确认 Word 文件已经保存并关闭。
+
+### 4. Mermaid 图没有生成
+
+先检查：
+
+```powershell
+node --version
+npx --version
+```
+
+然后强制重新渲染：
+
+```powershell
+.\scripts\build.ps1 -ForceMermaid
+```
+
+如果仍失败，先检查 `.mmd` 文件语法。可以临时让正文显示 Mermaid 源码，但正式提交前应生成真实图片。
+
+### 5. 图片不显示
+
+检查图片路径是否正确。LaTeX 路径建议使用 `/`：
+
+```tex
+figures/screenshots/example.png
+```
+
+不要写成：
+
+```tex
+figures\screenshots\example.png
+```
+
+### 6. 中文字体报错
+
+模板默认使用 Windows 常见字体，如宋体、黑体、仿宋、Times New Roman。请尽量在 Windows 上编译。如果在其他系统编译，需要自行调整 `zustcs-thesis.cls` 中的字体配置。
+
+### 7. PDF 页码或目录不对
+
+重新运行：
+
+```powershell
+.\scripts\build.ps1
+```
+
+`latexmk` 会自动多轮编译。不要只运行一次 `xelatex`。
+
+## 提交前检查清单
+
+正式提交前建议逐项检查：
+
+```text
+封面信息是否正确
+授权书和版权页是否填写并保留学校格式
+中文摘要和英文摘要是否完整
+关键词是否规范
+目录页码是否正确
+正文是否仍有“请填写”“占位”“示例”等文字
+图题、表题和正文引用是否一致
+截图是否全部替换为真实截图
+Mermaid 图是否已经渲染为 PDF
+参考文献是否真实可查
+致谢是否已经替换成个人内容
+最终 PDF 是否能正常打开
+```
+
+## 不建议修改的文件
+
+初学者通常不需要改这些文件：
+
+```text
+zustcs-thesis.cls
+.latexmkrc
+scripts/run-xelatex.ps1
+scripts/export-frontmatter.ps1
+```
+
+如果只是写论文，主要修改：
+
+```text
+main.tex
+chapters/*.tex
+frontmatter/*.docx
+frontmatter/*.doc
+figures/mermaid/*.mmd
+figures/screenshots/*
+```
+
+## 最小工作流
+
+如果你只想快速开始，可以记住这 5 步：
+
+```powershell
+# 1. 进入模板目录
+cd path\to\zust-cs-thesis-template
+
+# 2. 先编译一次，确认环境可用
+.\scripts\build.ps1
+
+# 3. 修改 main.tex、chapters/*.tex 和 frontmatter/*.docx
+
+# 4. 放入截图和 Mermaid 图
+
+# 5. 再次生成最终 PDF
+.\scripts\build.ps1 -ForceFrontmatter -ForceMermaid
+```
+
+最终提交时，以生成的 `main.pdf` 为准。
