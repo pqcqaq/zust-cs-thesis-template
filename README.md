@@ -15,11 +15,11 @@
 ## 这个模板能做什么
 
 - 自动生成最终论文 PDF：`main.pdf`。
-- 自动生成 Word 审阅版 DOCX：`dist/毕业设计论文.docx` 或 `dist/<论文题目>.docx`。
+- 自动生成 Word 审阅版 DOCX：`dist/毕业设计论文.docx` 或 `dist/<论文题目>.docx`，默认以最终 PDF 为输入进行转换。
 - 使用学校提供的 Word 固定页作为封面、出版授权书、版权使用授权书。
 - 自动把 `frontmatter/*.docx` 和 `frontmatter/*.doc` 导出为 PDF 并合并进论文。
 - 自动把 `figures/mermaid/*.mmd` 渲染成 PDF 图片。
-- 生成 DOCX 时自动把 Mermaid 图额外渲染成 PNG，便于 Word 打开和审阅。
+- 生成 DOCX 时优先从 `main.pdf` 转换，尽量保持分页、空白、固定页和图表外观与 PDF 一致。
 - 截图文件不存在时，正文会先显示截图占位框，方便你后续补图。
 - 同时提供 PowerShell 脚本和 Bash 脚本，Windows、macOS、Linux 都能走基本构建流程。
 - 字体配置带有 fallback：Windows 优先宋体/黑体，macOS 优先 Songti/Heiti，Linux 优先 Noto/Fandol。
@@ -49,9 +49,9 @@
 ├── scripts/
 │   ├── build.ps1              # Windows 一键构建
 │   ├── build.sh               # macOS/Linux 一键构建
-│   ├── build-docx.mjs         # DOCX 转换核心脚本
-│   ├── build-docx.ps1         # Windows 生成 DOCX，支持合并固定页
-│   ├── build-docx.sh          # macOS/Linux 生成正文 DOCX
+│   ├── build-docx.mjs         # 旧版 Pandoc 转换脚本，默认流程不再使用
+│   ├── build-docx.ps1         # 先生成 PDF，再将 PDF 转为 DOCX
+│   ├── build-docx.sh          # macOS/Linux 调用 PowerShell 版 DOCX 构建
 │   ├── clean.ps1              # Windows 清理临时文件
 │   ├── clean.sh               # macOS/Linux 清理临时文件
 │   ├── export-frontmatter.ps1 # Windows 使用 Word 导出固定页
@@ -151,33 +151,17 @@ npx --version
 
 构建脚本会通过 `npx --yes @mermaid-js/mermaid-cli` 自动调用 Mermaid CLI，不需要你手动全局安装 Mermaid。
 
-### 4. 安装 Pandoc
+### 4. 安装 PDF 转 DOCX 依赖
 
-Pandoc 用于把 LaTeX 正文转换为 Word DOCX。只编译 PDF 时不需要 Pandoc；如果要使用 `build-docx`，必须安装。
+DOCX 现在默认从最终 `main.pdf` 转换得到。Windows 上优先使用 Microsoft Word 的 PDF 导入功能；如果本机 Word 不支持 PDF 导入，脚本会回退到 Python `pdf2docx`。
 
-Windows 如果使用 Scoop，可以执行：
+安装 Python 依赖：
 
 ```powershell
-scoop install pandoc
+python -m pip install pdf2docx pymupdf opencv-python-headless
 ```
 
-macOS 如果使用 Homebrew：
-
-```bash
-brew install pandoc
-```
-
-Linux 以 Ubuntu/Debian 为例：
-
-```bash
-sudo apt install pandoc
-```
-
-检查命令是否可用：
-
-```bash
-pandoc --version
-```
+如果你使用 Adobe Acrobat、在线工具或学校指定工具转换出更高保真的 DOCX，也可以通过 `-ReferenceDocxPath` 提供给脚本。脚本会检查页数，只有页数与 PDF 一致时才采用该文件。
 
 ### 5. 允许脚本运行
 
@@ -243,7 +227,7 @@ main.pdf
 
 ## 生成 DOCX 审阅版
 
-PDF 是最终提交版式，DOCX 更适合发给导师批注或自己在 Word 中做临时修改。模板提供了单独的 DOCX 构建脚本。
+PDF 是最终提交版式，DOCX 更适合发给导师批注或自己在 Word 中做临时修改。为了让 Word 版尽量贴近 PDF，模板不再用 Pandoc 重新排版正文，而是先生成 `main.pdf`，再把 PDF 转成 DOCX。
 
 Windows 运行：
 
@@ -269,35 +253,25 @@ dist/毕业设计论文.docx
 dist/<论文题目>.docx
 ```
 
-Windows 下如果安装了 Microsoft Word，`build-docx.ps1` 会先生成正文 DOCX，再把 `frontmatter/cover.docx`、`frontmatter/authorization.doc`、`frontmatter/copyright.doc` 合并到正文前，得到带固定页的完整审阅版。
-
-macOS/Linux 下 `build-docx.sh` 会生成可编辑正文 DOCX。固定页最终版式仍建议以 PDF 为准，因为学校固定页由 Word/LibreOffice 导出为 PDF 后合并最稳定。
+脚本会先运行 PDF 构建，再执行 PDF 转 DOCX。转换完成后会统计 Word 页数，并与 PDF 页数比较。如果页数不一致，脚本会报错；你可以使用 `-ReferenceDocxPath` 指定一份由在线工具、Adobe Acrobat 或其他高保真工具转换得到的 DOCX 作为后备。
 
 常用参数：
 
 ```powershell
-# Windows：只生成正文，不合并封面和授权书
-.\scripts\build-docx.ps1 -NoFrontmatter
+# Windows：PDF 已经是最新时，跳过 PDF 编译，直接转换
+.\scripts\build-docx.ps1 -SkipPdfBuild
 
-# Windows：跳过 Mermaid PNG 渲染
+# Windows：跳过 Mermaid 渲染，复用已有图片
 .\scripts\build-docx.ps1 -SkipMermaid
 
 # Windows：指定输出文件
 .\scripts\build-docx.ps1 -OutputPath dist\review.docx
+
+# Windows：指定高保真 PDF 转 Word 结果作为后备
+.\scripts\build-docx.ps1 -ReferenceDocxPath ..\main.docx
 ```
 
-```bash
-# macOS/Linux：只生成正文 DOCX
-./scripts/build-docx.sh --no-frontmatter
-
-# macOS/Linux：跳过 Mermaid PNG 渲染
-./scripts/build-docx.sh --skip-mermaid
-
-# macOS/Linux：指定输出文件
-./scripts/build-docx.sh --output dist/review.docx
-```
-
-需要注意：DOCX 转换会尽量保留章节、表格、图题、引用编号和截图占位，但它不是学校最终排版的替代品。正式提交仍应检查 `main.pdf`。
+macOS/Linux 通过 `build-docx.sh` 调用同一套 PowerShell 流程，因此需要安装 PowerShell 7。需要注意：DOCX 转换结果取决于本机 PDF 转 Word 工具。正式提交仍应检查 `main.pdf`。
 
 ## 推荐写作顺序
 

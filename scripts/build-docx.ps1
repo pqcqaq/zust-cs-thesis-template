@@ -1,9 +1,13 @@
 param(
     [string]$OutputPath,
+    [string]$PdfPath,
+    [string]$ReferenceDocxPath,
+    [switch]$SkipPdfBuild,
+    [switch]$SkipFrontmatter,
     [switch]$SkipMermaid,
+    [switch]$ForceFrontmatter,
     [switch]$ForceMermaid,
-    [switch]$NoFrontmatter,
-    [switch]$KeepTemp
+    [switch]$OpenAfterBuild
 )
 
 $ErrorActionPreference = "Stop"
@@ -13,34 +17,12 @@ function Write-Step {
     Write-Host $Message
 }
 
-function Test-IsWindows {
-    if ($PSVersionTable.PSEdition -eq "Desktop") {
-        return $true
-    }
-    return [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
-        [System.Runtime.InteropServices.OSPlatform]::Windows
-    )
-}
-
-function Get-Tool {
-    param(
-        [string[]]$Names,
-        [string]$InstallHint
-    )
-
-    foreach ($name in $Names) {
-        $tool = Get-Command $name -ErrorAction SilentlyContinue
-        if ($null -ne $tool) {
-            return $tool
-        }
-    }
-
-    throw "$($Names -join '/') not found. $InstallHint"
-}
-
 function Resolve-ProjectPath {
     param([string]$Path)
 
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        return $null
+    }
     if ([System.IO.Path]::IsPathRooted($Path)) {
         return [System.IO.Path]::GetFullPath($Path)
     }
@@ -50,88 +32,46 @@ function Resolve-ProjectPath {
 function Get-DefaultDocxOutput {
     $mainPath = Join-Path $ProjectRoot "main.tex"
     $content = Get-Content -LiteralPath $mainPath -Raw -Encoding UTF8
-    $start = $content.IndexOf("\makethesiscover", [System.StringComparison]::Ordinal)
     $title = "毕业设计论文"
-    if ($start -ge 0) {
-        $tail = $content.Substring($start)
-        $match = [regex]::Match($tail, "\\makethesiscover\s*\{(?<title>[^}]+)\}")
-        if ($match.Success) {
-            $candidate = ($match.Groups["title"].Value -replace "\\allowbreak\{\}", "" -replace "\\_", "_").Trim()
-            if ($candidate -and $candidate -notmatch "请.*填写|毕业设计.*题目") {
-                $title = $candidate
-            }
+    $match = [regex]::Match($content, "\\makethesiscover\s*\{(?<title>[^}]+)\}")
+    if ($match.Success) {
+        $candidate = ($match.Groups["title"].Value -replace "\\allowbreak\{\}", "" -replace "\\_", "_").Trim()
+        if ($candidate -and $candidate -notmatch "请.*填写|毕业设计.*题目") {
+            $title = $candidate
         }
     }
-    $invalid = [System.IO.Path]::GetInvalidFileNameChars()
-    foreach ($char in $invalid) {
+    foreach ($char in [System.IO.Path]::GetInvalidFileNameChars()) {
         $title = $title.Replace([string]$char, "_")
     }
     return Join-Path $ProjectRoot (Join-Path "dist" "$title.docx")
 }
 
-function Merge-FrontmatterWithBody {
+function Convert-PdfToDocxWithWord {
     param(
-        [string]$BodyDocxPath,
-        [string]$OutputDocxPath
+        [string]$SourcePdf,
+        [string]$TargetDocx
     )
 
-    if ($NoFrontmatter) {
-        Copy-Item -LiteralPath $BodyDocxPath -Destination $OutputDocxPath -Force
-        Write-Step "[docx] frontmatter merge disabled; wrote body DOCX"
-        return $false
-    }
-
-    if (-not (Test-IsWindows)) {
-        Copy-Item -LiteralPath $BodyDocxPath -Destination $OutputDocxPath -Force
-        Write-Warning "[docx] Microsoft Word COM is only available on Windows; wrote body DOCX without fixed frontmatter"
-        return $false
-    }
-
-    $frontmatterFiles = @(
-        (Join-Path $ProjectRoot "frontmatter\cover.docx"),
-        (Join-Path $ProjectRoot "frontmatter\authorization.doc"),
-        (Join-Path $ProjectRoot "frontmatter\copyright.doc")
-    )
-    foreach ($file in $frontmatterFiles) {
-        if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
-            Copy-Item -LiteralPath $BodyDocxPath -Destination $OutputDocxPath -Force
-            Write-Warning "[docx] missing frontmatter source: $file; wrote body DOCX without fixed frontmatter"
-            return $false
-        }
+    $targetDir = Split-Path -Parent $TargetDocx
+    if (-not (Test-Path -LiteralPath $targetDir -PathType Container)) {
+        New-Item -ItemType Directory -Path $targetDir | Out-Null
     }
 
     $word = $null
     $doc = $null
     try {
-        try {
-            $word = New-Object -ComObject Word.Application
-        }
-        catch {
-            Copy-Item -LiteralPath $BodyDocxPath -Destination $OutputDocxPath -Force
-            Write-Warning "[docx] Microsoft Word is not available; wrote body DOCX without fixed frontmatter"
-            return $false
-        }
-
+        Write-Step "[docx] open PDF in Microsoft Word: $SourcePdf"
+        $word = New-Object -ComObject Word.Application
         $word.Visible = $false
         $word.DisplayAlerts = 0
+        $word.AutomationSecurity = 3
+        $doc = $word.Documents.Open($SourcePdf, $false, $true)
 
-        $doc = $word.Documents.Open($frontmatterFiles[0], $false, $false)
-
-        foreach ($file in @($frontmatterFiles[1], $frontmatterFiles[2], $BodyDocxPath)) {
-            $range = $doc.Range()
-            $range.Collapse(0) | Out-Null
-            $range.InsertBreak(7) | Out-Null
-            $range = $doc.Range()
-            $range.Collapse(0) | Out-Null
-            $range.InsertFile($file) | Out-Null
+        if (Test-Path -LiteralPath $TargetDocx -PathType Leaf) {
+            Remove-Item -LiteralPath $TargetDocx -Force
         }
-
-        if (Test-Path -LiteralPath $OutputDocxPath -PathType Leaf) {
-            Remove-Item -LiteralPath $OutputDocxPath -Force
-        }
-        $doc.SaveAs2($OutputDocxPath, 16)
-        Write-Step "[docx] merged fixed frontmatter with body DOCX"
-        return $true
+        Write-Step "[docx] save DOCX: $TargetDocx"
+        $doc.SaveAs2($TargetDocx, 16)
     }
     finally {
         if ($null -ne $doc) {
@@ -141,9 +81,118 @@ function Merge-FrontmatterWithBody {
         if ($null -ne $word) {
             $word.Quit() | Out-Null
             [System.Runtime.InteropServices.Marshal]::ReleaseComObject($word) | Out-Null
-            [System.GC]::Collect()
-            [System.GC]::WaitForPendingFinalizers()
         }
+        [System.GC]::Collect()
+        [System.GC]::WaitForPendingFinalizers()
+    }
+}
+
+function Convert-PdfToDocxWithPython {
+    param(
+        [string]$SourcePdf,
+        [string]$TargetDocx
+    )
+
+    $python = Get-Command python -ErrorAction SilentlyContinue
+    if ($null -eq $python) {
+        throw "python not found. Install Python and pdf2docx, then retry."
+    }
+
+    $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) ("zust-pdf2docx-" + [System.Guid]::NewGuid().ToString("N") + ".py")
+    $pythonCode = @"
+import sys
+import logging
+from pathlib import Path
+
+try:
+    from pdf2docx import Converter
+except Exception as exc:
+    raise SystemExit("pdf2docx is not installed or cannot be imported: " + str(exc))
+
+source = Path(sys.argv[1])
+target = Path(sys.argv[2])
+logging.getLogger().setLevel(logging.ERROR)
+target.parent.mkdir(parents=True, exist_ok=True)
+if target.exists():
+    target.unlink()
+
+converter = Converter(str(source))
+try:
+    converter.convert(str(target), start=0, end=None)
+finally:
+    converter.close()
+"@
+    try {
+        Set-Content -LiteralPath $scriptPath -Value $pythonCode -Encoding UTF8
+        Write-Step "[docx] convert PDF with python pdf2docx"
+        & $python.Source $scriptPath $SourcePdf $TargetDocx
+        if ($LASTEXITCODE -ne 0) {
+            throw "python pdf2docx conversion failed"
+        }
+    }
+    finally {
+        if (Test-Path -LiteralPath $scriptPath -PathType Leaf) {
+            Remove-Item -LiteralPath $scriptPath -Force
+        }
+    }
+}
+
+function Convert-PdfToDocx {
+    param(
+        [string]$SourcePdf,
+        [string]$TargetDocx
+    )
+
+    try {
+        Convert-PdfToDocxWithWord -SourcePdf $SourcePdf -TargetDocx $TargetDocx
+        return "word"
+    }
+    catch {
+        Write-Warning "[docx] Microsoft Word PDF conversion failed: $($_.Exception.Message)"
+        Convert-PdfToDocxWithPython -SourcePdf $SourcePdf -TargetDocx $TargetDocx
+        return "pdf2docx"
+    }
+}
+
+function Get-PdfPageCount {
+    param([string]$SourcePdf)
+
+    $python = Get-Command python -ErrorAction SilentlyContinue
+    if ($null -eq $python) {
+        throw "python not found; cannot verify PDF page count."
+    }
+    $script = "import fitz, sys; print(fitz.open(sys.argv[1]).page_count)"
+    $result = & $python.Source -c $script $SourcePdf
+    if ($LASTEXITCODE -ne 0) {
+        throw "failed to read PDF page count: $SourcePdf"
+    }
+    return [int]($result | Select-Object -Last 1)
+}
+
+function Get-WordPageCount {
+    param([string]$DocxPath)
+
+    $word = $null
+    $doc = $null
+    try {
+        $word = New-Object -ComObject Word.Application
+        $word.Visible = $false
+        $word.DisplayAlerts = 0
+        $doc = $word.Documents.Open($DocxPath, $false, $true)
+        $doc.Repaginate()
+        return $doc.ComputeStatistics(2)
+    }
+    finally {
+        if ($null -ne $doc) {
+            $doc.Close($false) | Out-Null
+            [System.Runtime.InteropServices.Marshal]::ReleaseComObject($doc) | Out-Null
+        }
+        if ($null -ne $word) {
+            $word.Quit() | Out-Null
+            [System.Runtime.InteropServices.Marshal]::ReleaseComObject($word) | Out-Null
+        }
+        [System.GC]::Collect()
+        [System.GC]::WaitForPendingFinalizers()
     }
 }
 
@@ -157,40 +206,63 @@ else {
     $OutputPath = Resolve-ProjectPath -Path $OutputPath
 }
 
-$outputDir = Split-Path -Parent $OutputPath
-if (-not (Test-Path -LiteralPath $outputDir -PathType Container)) {
-    New-Item -ItemType Directory -Path $outputDir | Out-Null
+if ([string]::IsNullOrWhiteSpace($PdfPath)) {
+    $PdfPath = Join-Path $ProjectRoot "main.pdf"
+}
+else {
+    $PdfPath = Resolve-ProjectPath -Path $PdfPath
 }
 
-$node = Get-Tool -Names @("node.exe", "node") -InstallHint "Install Node.js, then retry."
-$bodyDocx = Join-Path ([System.IO.Path]::GetTempPath()) ("zust-thesis-body-" + [System.Guid]::NewGuid().ToString("N") + ".docx")
+if (-not [string]::IsNullOrWhiteSpace($ReferenceDocxPath)) {
+    $ReferenceDocxPath = Resolve-ProjectPath -Path $ReferenceDocxPath
+}
 
-try {
-    $nodeArgs = @(
-        (Join-Path $PSScriptRoot "build-docx.mjs"),
-        "--output",
-        $bodyDocx
-    )
-    if ($SkipMermaid) {
-        $nodeArgs += "--skip-mermaid"
-    }
-    if ($ForceMermaid) {
-        $nodeArgs += "--force-mermaid"
-    }
-    if ($KeepTemp) {
-        $nodeArgs += "--keep-temp"
-    }
+if (-not $SkipPdfBuild) {
+    $buildArgs = @()
+    if ($SkipFrontmatter) { $buildArgs += "-SkipFrontmatter" }
+    if ($SkipMermaid) { $buildArgs += "-SkipMermaid" }
+    if ($ForceFrontmatter) { $buildArgs += "-ForceFrontmatter" }
+    if ($ForceMermaid) { $buildArgs += "-ForceMermaid" }
 
-    & $node.Source @nodeArgs
+    Write-Step "[docx] build PDF first"
+    & (Join-Path $PSScriptRoot "build.ps1") @buildArgs
     if ($LASTEXITCODE -ne 0) {
-        throw "DOCX body build failed"
+        throw "PDF build failed"
     }
-
-    Merge-FrontmatterWithBody -BodyDocxPath $bodyDocx -OutputDocxPath $OutputPath | Out-Null
-    Write-Step "[docx] output: $OutputPath"
 }
-finally {
-    if (Test-Path -LiteralPath $bodyDocx -PathType Leaf) {
-        Remove-Item -LiteralPath $bodyDocx -Force
+
+if (-not (Test-Path -LiteralPath $PdfPath -PathType Leaf)) {
+    throw "PDF not found: $PdfPath"
+}
+
+$pdfPageCount = Get-PdfPageCount -SourcePdf $PdfPath
+Write-Step "[docx] PDF page count: $pdfPageCount"
+$backend = Convert-PdfToDocx -SourcePdf $PdfPath -TargetDocx $OutputPath
+$pageCount = Get-WordPageCount -DocxPath $OutputPath
+
+if ($pageCount -ne $pdfPageCount) {
+    Write-Warning "[docx] converted DOCX page count ($pageCount) does not match PDF page count ($pdfPageCount)"
+    if (-not [string]::IsNullOrWhiteSpace($ReferenceDocxPath) -and (Test-Path -LiteralPath $ReferenceDocxPath -PathType Leaf)) {
+        $referencePageCount = Get-WordPageCount -DocxPath $ReferenceDocxPath
+        if ($referencePageCount -eq $pdfPageCount) {
+            Write-Step "[docx] use provided high-fidelity PDF-converted DOCX: $ReferenceDocxPath"
+            Copy-Item -LiteralPath $ReferenceDocxPath -Destination $OutputPath -Force
+            $backend = "provided-pdf-converted-docx"
+            $pageCount = $referencePageCount
+        }
+        else {
+            throw "Converted DOCX has $pageCount pages and reference DOCX has $referencePageCount pages; both differ from PDF page count $pdfPageCount."
+        }
     }
+    else {
+        throw "Converted DOCX has $pageCount pages, but PDF has $pdfPageCount pages. Provide a high-fidelity converted DOCX with -ReferenceDocxPath or install a better PDF-to-DOCX converter."
+    }
+}
+
+Write-Step "[docx] output: $OutputPath"
+Write-Step "[docx] backend: $backend"
+Write-Step "[docx] Word page count after conversion: $pageCount"
+
+if ($OpenAfterBuild) {
+    Invoke-Item -LiteralPath $OutputPath
 }
