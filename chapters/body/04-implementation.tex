@@ -1,0 +1,20 @@
+\chapter{系统详细设计与实现}
+
+\section{核心模块实现}
+
+本章应是全文重点。建议每个主要功能模块包含模块说明、页面或流程截图、关键代码片段和实现难点。下面给出截图占位示例，放入同名图片后会自动替换。
+
+\begin{figure}[H]
+\centering
+\renderscreenshot{4-1}{screenshot-module-page.png}{核心功能页面截图占位}{请填写页面或功能来源}
+\end{figure}
+
+\section{关键代码示例}
+
+代码片段应服务于论文说明，不宜直接粘贴大段源码。示例如下：
+
+\begin{lstlisting}[style=thesiscode,language=python]
+def validate_status(status: str) -> bool:
+    allowed = {"draft", "processing", "finished"}
+    return status in allowed
+\end{lstlisting}

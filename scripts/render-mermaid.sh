@@ -79,6 +79,7 @@ if [[ "${#jobs[@]}" -eq 0 ]]; then
   exit 0
 fi
 
+export PUPPETEER_SKIP_DOWNLOAD=true
 for source in "${jobs[@]}"; do
   base="$(basename "$source" .mmd)"
   target="$OUTPUT_DIR/$base.pdf"

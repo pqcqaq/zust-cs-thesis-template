@@ -39,17 +39,17 @@ if ($null -eq $latexmk) {
     throw "latexmk not found. Install latexmk, then retry."
 }
 
-$oldSkip = $env:WISH_SKIP_LATEX_PREPARE
-$env:WISH_SKIP_LATEX_PREPARE = "1"
+$oldSkip = $env:ZUST_SKIP_LATEX_PREPARE
+$env:ZUST_SKIP_LATEX_PREPARE = "1"
 try {
     & $latexmk.Source -xelatex -interaction=nonstopmode -file-line-error main.tex
     exit $LASTEXITCODE
 }
 finally {
     if ($null -eq $oldSkip) {
-        Remove-Item Env:\WISH_SKIP_LATEX_PREPARE -ErrorAction SilentlyContinue
+        Remove-Item Env:\ZUST_SKIP_LATEX_PREPARE -ErrorAction SilentlyContinue
     }
     else {
-        $env:WISH_SKIP_LATEX_PREPARE = $oldSkip
+        $env:ZUST_SKIP_LATEX_PREPARE = $oldSkip
     }
 }

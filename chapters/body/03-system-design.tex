@@ -1,0 +1,32 @@
+\chapter{系统总体设计}
+
+\section{总体架构设计}
+
+本节用于说明系统整体架构、模块边界和数据流向。图 3-1 给出一个通用分层架构示例，正式使用时应替换为真实系统架构。
+
+\begin{figure}[H]
+\centering
+\rendermermaid{fig-3-1}{0.50\textheight}
+\caption{系统总体架构}\label{fig:3-1}
+\end{figure}
+
+\section{数据库设计}
+
+数据库设计应结合实体关系、字段含义、索引约束和状态流转展开。表 3-1 给出通用示例，正式论文中应替换为真实表结构。
+
+\begingroup
+\zihao{5}\setstretch{1.15}\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|>{\RaggedRight\arraybackslash}p{0.25\textwidth}|>{\RaggedRight\arraybackslash}p{0.39\textwidth}|}
+\caption{核心数据表示例}\label{tab:3-1}\\
+\hline
+\textbf{表名} & \textbf{主要字段} & \textbf{说明} \\ \hline
+\endfirsthead
+\multicolumn{3}{c}{续表~\thetable}\\
+\hline
+\textbf{表名} & \textbf{主要字段} & \textbf{说明} \\ \hline
+\endhead
+用户表 & \texttt{id}、\texttt{name}、\texttt{role} & 保存用户基础信息和角色信息 \\ \hline
+业务记录表 & \texttt{id}、\texttt{status}、\texttt{created\_at} & 保存核心业务记录及其状态 \\ \hline
+操作日志表 & \texttt{id}、\texttt{operator\_id}、\texttt{content} & 保存关键操作日志，便于审计和追溯 \\ \hline
+\end{longtable}
+\endgroup

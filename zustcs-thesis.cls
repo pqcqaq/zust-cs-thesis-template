@@ -81,7 +81,7 @@
     number = \arabic{chapter},
     format = \centering\heiti\zihao{-2},
     aftername = \quad,
-    beforeskip = 0.5\baselineskip,
+    beforeskip = -0.35\baselineskip,
     afterskip = 1.0\baselineskip,
     pagestyle = fancy
   },
@@ -119,17 +119,25 @@
 \setlength{\cftbeforechapskip}{0.22em}
 \setlength{\cftbeforesecskip}{0.02em}
 \setlength{\cftbeforesubsecskip}{0em}
-% 目录编号采用轻量阶梯缩进；编号盒保持紧凑，避免编号与标题间距过大。
-\cftsetindents{chapter}{0em}{3.8em}
-\cftsetindents{section}{0em}{4.3em}
-\cftsetindents{subsection}{0em}{5.0em}
+% 目录数字前保留层级缩进；编号盒收窄，避免编号与标题之间留出过大空白。
+\cftsetindents{chapter}{0em}{2.65em}
+\cftsetindents{section}{0em}{2.35em}
+\cftsetindents{subsection}{0em}{3.65em}
 \renewcommand{\cftchappresnum}{}
 \renewcommand{\cftsecpresnum}{\hspace*{0.8em}}
 \renewcommand{\cftsubsecpresnum}{\hspace*{1.6em}}
+\renewcommand{\cftchapaftersnum}{}
+\renewcommand{\cftsecaftersnum}{}
+\renewcommand{\cftsubsecaftersnum}{}
 
 \renewcommand{\thefigure}{\thechapter-\arabic{figure}}
 \renewcommand{\thetable}{\thechapter-\arabic{table}}
-\captionsetup[figure]{font={small,bf},labelfont=bf,labelsep=space,position=bottom}
+\setlength{\floatsep}{0.35\baselineskip}
+\setlength{\textfloatsep}{0.45\baselineskip}
+\setlength{\intextsep}{0.35\baselineskip}
+\setlength{\abovecaptionskip}{0.20\baselineskip}
+\setlength{\belowcaptionskip}{0pt}
+\captionsetup[figure]{font={small,bf},labelfont=bf,labelsep=space,position=bottom,skip=0.18\baselineskip}
 \captionsetup[table]{font={small,bf},labelfont=bf,labelsep=space,position=top}
 \renewcommand{\figurename}{图}
 \renewcommand{\tablename}{表}
@@ -163,6 +171,16 @@
   xleftmargin=0pt
 }
 
+\newcommand{\rendermermaid}[2]{%
+  \IfFileExists{figures/generated/#1.pdf}{%
+    \includegraphics[width=\textwidth,height=#2,keepaspectratio]{figures/generated/#1.pdf}%
+  }{%
+    \begin{minipage}{0.96\textwidth}%
+      \lstinputlisting[style=mermaid]{figures/mermaid/#1.mmd}%
+    \end{minipage}%
+  }%
+}
+
 \makeatletter
 \renewcommand{\@cite}[2]{\textsuperscript{[#1]}}
 \makeatother
@@ -192,22 +210,27 @@
 }
 \newcommand{\renderscreenshot}[4]{%
   \IfFileExists{figures/screenshots/#2}{%
-    \includegraphics[width=0.92\textwidth,height=0.50\textheight,keepaspectratio]{figures/screenshots/#2}%
+    \makebox[\textwidth][c]{%
+      \includegraphics[width=1.15\textwidth,height=0.50\textheight,keepaspectratio]{figures/screenshots/#2}%
+    }%
   }{%
-    \fbox{%
-      \begin{minipage}[c][0.34\textwidth][c]{0.88\textwidth}
-        \centering
-        {\heiti\zihao{-4}截图占位\par}
-        \vspace{0.5em}
-        {\songti\zihao{5}#3\par}
-        \vspace{0.35em}
-        {\ttfamily\zihao{5}figures/screenshots/#2\par}
-        \vspace{0.35em}
-        {\songti\zihao{5}参考页面：\texttt{#4}\par}
-      \end{minipage}%
+    \makebox[\textwidth][c]{%
+      \fbox{%
+        \begin{minipage}[c][0.42\textwidth][c]{1.08\textwidth}
+          \centering
+          {\heiti\zihao{-4}截图占位\par}
+          \vspace{0.5em}
+          {\songti\zihao{5}#3\par}
+          \vspace{0.35em}
+          {\ttfamily\zihao{5}figures/screenshots/#2\par}
+          \vspace{0.35em}
+          {\songti\zihao{5}参考页面：\texttt{#4}\par}
+        \end{minipage}%
+      }%
     }%
   }%
   \caption{#3}\label{fig:#1}%
+  \vspace{-0.15\baselineskip}%
 }
 
 \newcommand{\makethesiscover}[9]{%

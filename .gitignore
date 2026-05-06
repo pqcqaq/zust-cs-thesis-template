@@ -8,6 +8,7 @@ main.pdf
 *.toc
 *.xdv
 *.synctex.gz
+main-body.pdf
 
 # Generated frontmatter PDFs
 frontmatter/*.pdf
@@ -24,6 +25,8 @@ _docx_build/
 
 # Local review artifacts
 _review*/
+__pycache__/
+scripts/__pycache__/
 
 # OS/editor files
 Thumbs.db

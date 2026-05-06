@@ -1,0 +1,24 @@
+\chapter{系统测试与结果分析}
+
+\section{测试环境}
+
+本节用于说明硬件环境、软件环境、数据库版本、浏览器版本和测试数据来源。正式写作时应使用真实可复核的信息。
+
+\section{功能测试}
+
+\begingroup
+\zihao{5}\setstretch{1.15}\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|>{\RaggedRight\arraybackslash}p{0.33\textwidth}|>{\RaggedRight\arraybackslash}p{0.28\textwidth}|}
+\caption{功能测试用例示例}\label{tab:5-1}\\
+\hline
+\textbf{编号} & \textbf{测试内容} & \textbf{预期结果} \\ \hline
+\endfirsthead
+\multicolumn{3}{c}{续表~\thetable}\\
+\hline
+\textbf{编号} & \textbf{测试内容} & \textbf{预期结果} \\ \hline
+\endhead
+T01 & 登录系统并访问首页 & 页面正常显示 \\ \hline
+T02 & 新增一条核心业务记录 & 记录保存成功且状态正确 \\ \hline
+T03 & 查询历史业务记录 & 返回符合条件的数据 \\ \hline
+\end{longtable}
+\endgroup

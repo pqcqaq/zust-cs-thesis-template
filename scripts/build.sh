@@ -53,4 +53,4 @@ if ! command -v latexmk >/dev/null 2>&1; then
   exit 1
 fi
 
-WISH_SKIP_LATEX_PREPARE=1 latexmk -xelatex -interaction=nonstopmode -file-line-error main.tex
+ZUST_SKIP_LATEX_PREPARE=1 latexmk -xelatex -interaction=nonstopmode -file-line-error main.tex

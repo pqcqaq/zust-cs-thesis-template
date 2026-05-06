@@ -34,7 +34,8 @@
 ├── chapters/
 │   ├── abstract-cn.tex        # 中文摘要
 │   ├── abstract-en.tex        # 英文摘要
-│   ├── body.tex               # 正文主体
+│   ├── body.tex               # 正文入口，按章引入 chapters/body/*.tex
+│   ├── body/                  # 正文章节拆分目录
 │   ├── acknowledgements.tex   # 致谢
 │   └── references.tex         # 参考文献
 ├── frontmatter/
@@ -52,12 +53,15 @@
 │   ├── build-docx.mjs         # 旧版 Pandoc 转换脚本，默认流程不再使用
 │   ├── build-docx.ps1         # 先生成 PDF，再将 PDF 转为 DOCX
 │   ├── build-docx.sh          # macOS/Linux 调用 PowerShell 版 DOCX 构建
+│   ├── build-body.ps1         # 只编译正文部分
+│   ├── build-body.sh          # macOS/Linux 调用 PowerShell 版正文构建
 │   ├── clean.ps1              # Windows 清理临时文件
 │   ├── clean.sh               # macOS/Linux 清理临时文件
 │   ├── export-frontmatter.ps1 # Windows 使用 Word 导出固定页
 │   ├── export-frontmatter.sh  # macOS/Linux 使用 LibreOffice 导出固定页
 │   ├── render-mermaid.ps1     # Windows Mermaid 渲染
 │   ├── render-mermaid.sh      # macOS/Linux Mermaid 渲染
+│   ├── sync-markdown.ps1      # 从 LaTeX 源同步生成 Markdown 审阅稿
 │   ├── run-xelatex.ps1        # Windows latexmk 调用的 XeLaTeX 包装脚本
 │   └── run-xelatex.sh         # macOS/Linux latexmk 调用的 XeLaTeX 包装脚本
 └── .latexmkrc                 # latexmk 配置
@@ -281,7 +285,7 @@ macOS/Linux 通过 `build-docx.sh` 调用同一套 PowerShell 流程，因此需
 2. 修改 `main.tex` 中的封面字段。
 3. 修改 `frontmatter/` 里的学校固定页 Word 文件。
 4. 写中文摘要和英文摘要。
-5. 按章节替换 `chapters/body.tex`。
+5. 按章节替换 `chapters/body/` 下的正文文件。
 6. 放入系统截图和 Mermaid 图。
 7. 整理参考文献。
 8. 最后完整编译并检查 PDF。
@@ -378,10 +382,16 @@ chapters/abstract-en.tex
 
 ## 写正文
 
-正文主要写在：
+正文入口文件是：
 
 ```text
 chapters/body.tex
+```
+
+实际章节文件放在：
+
+```text
+chapters/body/
 ```
 
 模板已经给出常见本科论文结构：
@@ -413,6 +423,14 @@ chapters/body.tex
 必要的代码片段
 测试或运行结果
 ```
+
+如果只想检查正文部分，可以运行：
+
+```powershell
+.\scripts\build-body.ps1 -SkipMermaid
+```
+
+该命令会生成 `main-body.pdf`，不包含封面、摘要、目录、致谢和参考文献列表，适合快速检查正文分页和图表位置。
 
 ## 插入图片
 
@@ -483,10 +501,7 @@ figures/generated/fig-3-1.pdf
 ```tex
 \begin{figure}[H]
 \centering
-\IfFileExists{figures/generated/fig-3-1.pdf}{\includegraphics[width=0.82\textwidth]{figures/generated/fig-3-1.pdf}}{%
-\begin{minipage}{0.9\textwidth}
-\lstinputlisting[style=mermaid]{figures/mermaid/fig-3-1.mmd}
-\end{minipage}}
+\rendermermaid{fig-3-1}{0.50\textheight}
 \caption{系统总体架构}
 \label{fig:3-1}
 \end{figure}
@@ -518,7 +533,7 @@ figures/generated/fig-3-1.png
 
 ## 写表格
 
-简单表格可以参考 `chapters/body.tex` 中的 `longtable` 示例。字段较多时，建议不要把表格写得太宽。可以把字段拆成“表名、主要字段、说明”三列，或者把大表拆成多个小表。
+简单表格可以参考 `chapters/body/03-system-design.tex` 中的 `longtable` 示例。字段较多时，建议不要把表格写得太宽。可以把字段拆成“表名、主要字段、说明”三列，或者把大表拆成多个小表。
 
 表格引用示例：
 
@@ -649,6 +664,26 @@ macOS/Linux：
 
 ```bash
 ./scripts/build-docx.sh
+```
+
+只编译正文：
+
+Windows：
+
+```powershell
+.\scripts\build-body.ps1 -SkipMermaid
+```
+
+macOS/Linux：
+
+```bash
+./scripts/build-body.sh -SkipMermaid
+```
+
+从 LaTeX 源同步生成 Markdown 审阅稿：
+
+```powershell
+.\scripts\sync-markdown.ps1
 ```
 
 ## 常见问题
@@ -791,6 +826,7 @@ scripts/export-frontmatter.sh
 ```text
 main.tex
 chapters/*.tex
+chapters/body/*.tex
 frontmatter/*.docx
 frontmatter/*.doc
 figures/mermaid/*.mmd
@@ -810,7 +846,7 @@ cd path\to\zust-cs-thesis-template
 # 2. 先编译一次，确认环境可用
 .\scripts\build.ps1
 
-# 3. 修改 main.tex、chapters/*.tex 和 frontmatter/*.docx
+# 3. 修改 main.tex、chapters/*.tex、chapters/body/*.tex 和 frontmatter/*.docx
 
 # 4. 放入截图和 Mermaid 图
 
@@ -827,7 +863,7 @@ cd path/to/zust-cs-thesis-template
 # 2. 先编译一次，确认环境可用
 ./scripts/build.sh
 
-# 3. 修改 main.tex、chapters/*.tex 和 frontmatter/*.docx
+# 3. 修改 main.tex、chapters/*.tex、chapters/body/*.tex 和 frontmatter/*.docx
 
 # 4. 放入截图和 Mermaid 图
 

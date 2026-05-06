@@ -79,6 +79,7 @@ if ($null -eq $npx) {
     throw $message
 }
 
+$env:PUPPETEER_SKIP_DOWNLOAD = "true"
 foreach ($job in $jobs) {
     Write-Step "[mermaid] render: $($job.Source.Name) -> $([System.IO.Path]::GetFileName($job.Target))"
     & $npx.Source --yes "@mermaid-js/mermaid-cli" `

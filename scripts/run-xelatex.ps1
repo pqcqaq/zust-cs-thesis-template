@@ -16,7 +16,7 @@ $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 Set-Location $ProjectRoot
 Add-MiKTeXToPath
 
-if ($env:WISH_SKIP_LATEX_PREPARE -ne "1") {
+if ($env:ZUST_SKIP_LATEX_PREPARE -ne "1") {
     & (Join-Path $PSScriptRoot "export-frontmatter.ps1")
     & (Join-Path $PSScriptRoot "render-mermaid.ps1") -AllowFallback
 }
