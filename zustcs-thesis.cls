@@ -70,10 +70,11 @@
 \setlength{\parindent}{2em}
 \setlength{\parskip}{0pt}
 \setlength{\LTpre}{0.5\baselineskip}
-\setlength{\LTpost}{0.5\baselineskip}
+\setlength{\LTpost}{0pt}
 \setlength{\LTleft}{0pt plus 1fill}
 \setlength{\LTright}{0pt plus 1fill}
-\setlist[enumerate]{label=\arabic*.,leftmargin=2.2em,labelsep=0.6em,itemsep=0.05\baselineskip,topsep=0.15\baselineskip,parsep=0pt,partopsep=0pt}
+\setcounter{secnumdepth}{3}
+\setlist[enumerate,1]{label=(\arabic*),labelindent=2em,leftmargin=*,labelsep=0.6em,itemsep=0.05\baselineskip,topsep=0.15\baselineskip,parsep=0pt,partopsep=0pt}
 
 \ctexset{
   chapter = {
@@ -81,51 +82,61 @@
     number = \arabic{chapter},
     format = \centering\heiti\zihao{-2},
     aftername = \quad,
-    beforeskip = -0.35\baselineskip,
+    beforeskip = 0.5\baselineskip,
     afterskip = 1.0\baselineskip,
     pagestyle = fancy
   },
   section = {
     format = \Needspace{7\baselineskip}\heiti\zihao{-3},
+    aftername = \quad,
     beforeskip = 0.8\baselineskip,
     afterskip = 0.4\baselineskip
   },
   subsection = {
     format = \Needspace{6\baselineskip}\heiti\zihao{4},
+    aftername = \quad,
     beforeskip = 0.6\baselineskip,
     afterskip = 0.3\baselineskip
   },
   subsubsection = {
     format = \Needspace{5\baselineskip}\heiti\zihao{-4},
+    aftername = \quad,
     beforeskip = 0.4\baselineskip,
     afterskip = 0.2\baselineskip
   }
 }
 
+\titleformat{\subsubsection}[runin]
+  {\Needspace{3\baselineskip}\heiti\zihao{-4}}
+  {\thesubsubsection}
+  {1em}
+  {}
+\titlespacing*{\subsubsection}{0pt}{0.4\baselineskip}{1em}
+
 \renewcommand{\contentsname}{目录}
 \setcounter{tocdepth}{2}
-\renewcommand{\cftchapfont}{\heiti\zihao{5}}
-\renewcommand{\cftsecfont}{\songti\zihao{5}}
-\renewcommand{\cftsubsecfont}{\songti\zihao{5}}
-\renewcommand{\cftchappagefont}{\fontspec{Times New Roman}\bfseries\zihao{5}}
-\renewcommand{\cftsecpagefont}{\fontspec{Times New Roman}\zihao{5}}
-\renewcommand{\cftsubsecpagefont}{\fontspec{Times New Roman}\zihao{5}}
+\renewcommand{\cftchapfont}{\heiti\zihao{-4}}
+\renewcommand{\cftsecfont}{\songti\zihao{-4}}
+\renewcommand{\cftsubsecfont}{\songti\zihao{-4}}
+\renewcommand{\cftchappagefont}{\fontspec{Times New Roman}\bfseries\zihao{-4}}
+\renewcommand{\cftsecpagefont}{\fontspec{Times New Roman}\zihao{-4}}
+\renewcommand{\cftsubsecpagefont}{\fontspec{Times New Roman}\zihao{-4}}
 \renewcommand{\cftchapleader}{\cftdotfill{\cftdotsep}}
 \renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
 \renewcommand{\cftsubsecleader}{\cftdotfill{\cftdotsep}}
 \renewcommand{\cftdotsep}{1.6}
 \cftsetpnumwidth{2.6em}
 \cftsetrmarg{3.4em}
-\setlength{\cftbeforechapskip}{0.22em}
-\setlength{\cftbeforesecskip}{0.02em}
+\setlength{\cftbeforechapskip}{0.35em}
+\setlength{\cftbeforesecskip}{0.08em}
 \setlength{\cftbeforesubsecskip}{0em}
 % 目录数字前保留层级缩进；编号盒收窄，避免编号与标题之间留出过大空白。
-\cftsetindents{chapter}{0em}{2.65em}
-\cftsetindents{section}{0em}{2.35em}
-\cftsetindents{subsection}{0em}{3.65em}
+\cftsetindents{chapter}{0em}{4.0em}
+\cftsetindents{section}{0em}{4.0em}
+\cftsetindents{subsection}{0em}{7.0em}
 \renewcommand{\cftchappresnum}{}
-\renewcommand{\cftsecpresnum}{\hspace*{0.8em}}
-\renewcommand{\cftsubsecpresnum}{\hspace*{1.6em}}
+\renewcommand{\cftsecpresnum}{\hspace*{2em}}
+\renewcommand{\cftsubsecpresnum}{\hspace*{4em}}
 \renewcommand{\cftchapaftersnum}{}
 \renewcommand{\cftsecaftersnum}{}
 \renewcommand{\cftsubsecaftersnum}{}
@@ -138,9 +149,18 @@
 \setlength{\abovecaptionskip}{0.20\baselineskip}
 \setlength{\belowcaptionskip}{0pt}
 \captionsetup[figure]{font={small,bf},labelfont=bf,labelsep=space,position=bottom,skip=0.18\baselineskip}
-\captionsetup[table]{font={small,bf},labelfont=bf,labelsep=space,position=top}
+\captionsetup[table]{font={small,bf},labelfont=bf,labelsep=space,position=bottom,skip=0.18\baselineskip}
 \renewcommand{\figurename}{图}
 \renewcommand{\tablename}{表}
+
+\newcommand{\longtablecaptionmark}[1]{%
+  \refstepcounter{table}\label{#1}%
+}
+\newcommand{\tablecaptionbelow}[2]{%
+  \par\vspace{-0.18\baselineskip}%
+  \noindent\makebox[\textwidth][c]{\small\bfseries \tablename~\ref{#1}\ #2}\par%
+  \vspace{0.08\baselineskip}%
+}
 
 \lstdefinestyle{thesiscode}{
   basicstyle=\ttfamily\small,
@@ -330,17 +350,17 @@
   \clearpage
   \phantomsection
   \thispagestyle{fancy}
-  \vspace*{0.3cm}
+  \vspace*{-1.1cm}
   \begin{center}{\heiti\zihao{-2}目录\par}\end{center}
   \vspace{0.8cm}
   \begingroup
-  \zihao{5}\songti\setstretch{1.02}
+  \zihao{-4}\songti\setstretch{1.02}
   \@starttoc{toc}
   \endgroup
   \clearpage
 }
 \makeatother
-\newcommand{\abstractparagraph}[1]{\par #1\par}
+\newcommand{\abstractparagraph}[1]{\par{\songti\zihao{-4}#1\par}}
 \newcommand{\enabstractparagraph}[1]{\par\fontspec{Times New Roman} #1\par}
-\newcommand{\keywords}[1]{\par\noindent{\heiti\zihao{-4}关键词：}{\songti\zihao{-4}#1}\par}
+\newcommand{\keywords}[1]{\par\noindent{\heiti\zihao{-4}关键词：}\hspace{1em}{\songti\zihao{-4}#1}\par}
 \newcommand{\enkeywords}[1]{\par\noindent{\bfseries Keywords: }#1\par}
