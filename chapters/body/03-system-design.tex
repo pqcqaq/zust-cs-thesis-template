@@ -1,32 +1,19 @@
 \chapter{系统总体设计}
-
-\section{总体架构设计}
-
-本节用于说明系统整体架构、模块边界和数据流向。图 3-1 给出一个通用分层架构示例，正式使用时应替换为真实系统架构。
-
-\begin{figure}[H]
-\centering
-\rendermermaid{fig-3-1}{0.50\textheight}
-\caption{系统总体架构}\label{fig:3-1}
-\end{figure}
-
+\section{设计目标与总体架构}
+系统以“状态清晰、权限明确、记录可追溯”为设计目标，采用表现层、接口层、业务层和数据层分层结构。浏览器负责页面交互，接口层负责参数校验与身份认证，业务层执行借用流程和库存规则，数据层保存结构化业务数据与审计日志。如图~\ref{fig:3-1} 所示，各层通过稳定接口协作。
+\begin{figure}[H]\centering\rendermermaid{fig-3-1}{0.50\textheight}\caption{系统总体架构}\label{fig:3-1}\end{figure}
+\section{核心流程设计}
+借用申请的状态依次为“待审批、已批准、已领取、已归还、已驳回、已取消”。只有处于待审批状态的申请可以审批，只有已批准的申请可以登记领取，只有已领取的申请可以登记归还。图~\ref{fig:3-2} 给出了输入校验、库存检查和状态更新的基本流程。
+\begin{figure}[H]\centering\rendermermaid{fig-3-2}{0.50\textheight}\caption{设备借用业务流程}\label{fig:3-2}\end{figure}
 \section{数据库设计}
-
-数据库设计应结合实体关系、字段含义、索引约束和状态流转展开。表 3-1 给出通用示例，正式论文中应替换为真实表结构。
-
-\begingroup
-\zihao{5}\setstretch{1.15}\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.25}
-\begin{longtable}{|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|>{\RaggedRight\arraybackslash}p{0.25\textwidth}|>{\RaggedRight\arraybackslash}p{0.39\textwidth}|}
-\caption{核心数据表示例}\label{tab:3-1}\\
-\hline
-\textbf{表名} & \textbf{主要字段} & \textbf{说明} \\ \hline
+核心数据表如表~\ref{tab:3-1} 所示。设备表保存库存和状态，申请表保存业务过程，操作日志表保存发生时间、操作者和动作内容。
+\begingroup\zihao{5}\setstretch{1.15}\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{|>{\RaggedRight\arraybackslash}p{0.20\textwidth}|>{\RaggedRight\arraybackslash}p{0.27\textwidth}|>{\RaggedRight\arraybackslash}p{0.35\textwidth}|}
+\caption{核心数据表设计}\label{tab:3-1}\\\hline
+\textbf{数据表} & \textbf{关键字段} & \textbf{用途} \\\hline
 \endfirsthead
-\multicolumn{3}{c}{续表~\thetable}\\
-\hline
-\textbf{表名} & \textbf{主要字段} & \textbf{说明} \\ \hline
-\endhead
-用户表 & \texttt{id}、\texttt{name}、\texttt{role} & 保存用户基础信息和角色信息 \\ \hline
-业务记录表 & \texttt{id}、\texttt{status}、\texttt{created\_at} & 保存核心业务记录及其状态 \\ \hline
-操作日志表 & \texttt{id}、\texttt{operator\_id}、\texttt{content} & 保存关键操作日志，便于审计和追溯 \\ \hline
-\end{longtable}
-\endgroup
+设备表 & id、code、status、available\_quantity & 保存设备档案和可借数量 \\\hline
+申请表 & id、equipment\_id、applicant\_id、state & 保存借用申请及状态 \\\hline
+日志表 & id、operator\_id、action、created\_at & 保存关键操作审计信息 \\\hline
+\end{longtable}\endgroup
+

@@ -1,24 +1,16 @@
 \chapter{系统测试与结果分析}
-
-\section{测试环境}
-
-本节用于说明硬件环境、软件环境、数据库版本、浏览器版本和测试数据来源。正式写作时应使用真实可复核的信息。
-
+\section{测试环境与方法}
+示例测试使用 Windows 11、XeLaTeX 论文构建环境和关系数据库测试实例。测试采用黑盒功能测试与边界条件测试相结合的方式，重点验证状态转换、库存校验和权限边界。
 \section{功能测试}
-
-\begingroup
-\zihao{5}\setstretch{1.15}\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.25}
-\begin{longtable}{|>{\RaggedRight\arraybackslash}p{0.18\textwidth}|>{\RaggedRight\arraybackslash}p{0.33\textwidth}|>{\RaggedRight\arraybackslash}p{0.28\textwidth}|}
-\caption{功能测试用例示例}\label{tab:5-1}\\
-\hline
-\textbf{编号} & \textbf{测试内容} & \textbf{预期结果} \\ \hline
+\begingroup\zihao{5}\setstretch{1.15}\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{|>{\RaggedRight\arraybackslash}p{0.13\textwidth}|>{\RaggedRight\arraybackslash}p{0.35\textwidth}|>{\RaggedRight\arraybackslash}p{0.32\textwidth}|}
+\caption{主要功能测试用例}\label{tab:5-1}\\\hline
+\textbf{编号} & \textbf{测试操作} & \textbf{预期结果} \\\hline
 \endfirsthead
-\multicolumn{3}{c}{续表~\thetable}\\
-\hline
-\textbf{编号} & \textbf{测试内容} & \textbf{预期结果} \\ \hline
-\endhead
-T01 & 登录系统并访问首页 & 页面正常显示 \\ \hline
-T02 & 新增一条核心业务记录 & 记录保存成功且状态正确 \\ \hline
-T03 & 查询历史业务记录 & 返回符合条件的数据 \\ \hline
-\end{longtable}
-\endgroup
+T01 & 学生提交库存充足的借用申请 & 申请进入待审批状态 \\\hline
+T02 & 审批库存不足的申请 & 操作失败，库存不发生变化 \\\hline
+T03 & 重复登记同一申请归还 & 第二次操作被拒绝 \\\hline
+T04 & 学生访问管理员审批接口 & 返回无权限错误 \\\hline
+\end{longtable}\endgroup
+\section{测试结果分析}
+测试结果表明，正常流程和边界条件均按照设计规则执行。库存不足、重复归还和越权访问能够被服务端拦截，关键失败操作不会留下错误的状态更新。后续仍需在更大规模并发和真实部署环境下补充压力测试。

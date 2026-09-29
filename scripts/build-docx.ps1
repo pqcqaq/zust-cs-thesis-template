@@ -424,3 +424,4 @@ Write-Step "[docx] Word page count after conversion: $pageCount"
 if ($OpenAfterBuild) {
     Invoke-Item -LiteralPath $OutputPath
 }
+

@@ -28,3 +28,4 @@ if ($null -eq $xelatex) {
 
 & $xelatex.Source @LatexArgs
 exit $LASTEXITCODE
+

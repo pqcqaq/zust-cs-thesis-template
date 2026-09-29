@@ -2,6 +2,8 @@
 
 \setthesisheader{浙江科技大学计算机科学与技术学院本科毕业设计（论文）}
 
+\newcommand{\bindingblankpage}{\clearpage\thispagestyle{empty}\null\clearpage}
+
 \begin{document}
 
 \makethesiscover
@@ -14,6 +16,8 @@
   {请填写指导教师}
   {请填写教师职称}
   {请填写完成日期}
+
+\bindingblankpage
 
 \makeauthorizationpage
 \makecopyrightpage
@@ -32,5 +36,7 @@
 \input{chapters/body}
 \input{chapters/acknowledgements}
 \input{chapters/references}
+
+\bindingblankpage
 
 \end{document}

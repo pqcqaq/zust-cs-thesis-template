@@ -1,6 +1,5 @@
 flowchart TB
-    UI[表现层] --> API[业务接口层]
-    API --> Service[业务服务层]
+    UI[浏览器页面] --> API[接口与认证]
+    API --> Service[借用业务服务]
     Service --> DB[(关系数据库)]
-    Service --> File[(文件或对象存储)]
-    API --> Auth[权限与审计模块]
+    Service --> Log[(审计日志)]

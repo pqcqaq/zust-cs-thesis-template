@@ -27,11 +27,7 @@ if (-not $SkipFrontmatter) {
 }
 
 if (-not $SkipMermaid) {
-    $mermaidArgs = @("-AllowFallback")
-    if ($ForceMermaid) {
-        $mermaidArgs += "-Force"
-    }
-    & (Join-Path $PSScriptRoot "render-mermaid.ps1") @mermaidArgs
+    & (Join-Path $PSScriptRoot "render-mermaid.ps1") -AllowFallback -Force:$ForceMermaid
 }
 
 $latexmk = Get-Command latexmk -ErrorAction SilentlyContinue
@@ -53,3 +49,4 @@ finally {
         $env:ZUST_SKIP_LATEX_PREPARE = $oldSkip
     }
 }
+

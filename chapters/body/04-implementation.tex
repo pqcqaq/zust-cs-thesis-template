@@ -1,20 +1,25 @@
 \chapter{系统详细设计与实现}
-
-\section{核心模块实现}
-
-本章应是全文重点。建议每个主要功能模块包含模块说明、页面或流程截图、关键代码片段和实现难点。下面给出截图占位示例，放入同名图片后会自动替换。
-
-\begin{figure}[H]
-\centering
-\renderscreenshot{4-1}{screenshot-module-page.png}{核心功能页面截图占位}{请填写页面或功能来源}
-\end{figure}
-
-\section{关键代码示例}
-
-代码片段应服务于论文说明，不宜直接粘贴大段源码。示例如下：
-
+\section{登录与权限模块}
+用户登录后，服务端根据账号角色生成会话信息。前端路由只负责展示，真正的权限判断在接口层再次执行，避免仅依赖页面隐藏控制访问。登录失败时返回统一错误码，前端将错误信息显示在表单附近。
+\section{设备档案模块}
+设备列表支持按名称、分类和状态组合查询。管理员新增设备时必须填写唯一编号；停用设备前，系统检查是否存在未归还申请。设备状态和可借数量在同一事务中变更，保证列表展示与申请校验使用同一份数据。
+\section{借用申请与审批模块}
+学生在申请页面选择设备和借用时间，提交时由服务端重新读取库存并校验日期范围。审批通过后，系统写入审批人和处理时间；驳回则要求填写原因。核心状态更新逻辑如下：
 \begin{lstlisting}[style=thesiscode,language=python]
-def validate_status(status: str) -> bool:
-    allowed = {"draft", "processing", "finished"}
-    return status in allowed
+def approve_request(request_id: int, operator_id: int) -> None:
+    request = repo.get_for_update(request_id)
+    if request.state != "pending":
+        raise DomainError("request is not pending")
+    equipment = repo.get_equipment_for_update(request.equipment_id)
+    if equipment.available_quantity < request.quantity:
+        raise DomainError("insufficient inventory")
+    equipment.available_quantity -= request.quantity
+    request.state = "approved"
+    request.approved_by = operator_id
+    repo.save(equipment, request)
 \end{lstlisting}
+\section{归还与审计模块}
+管理员登记归还时选择设备状态：正常、待维修或报废。系统恢复可借数量时只处理已领取状态，重复点击不会重复增加库存。每次审批、领取、归还和状态变更都会写入日志，日志内容包括操作者、动作和业务编号。
+\section{页面交互示例}
+模板提供截图占位命令，实际项目中可将同名图片放入截图目录。以下占位图用于展示图题、路径和来源说明的写法。
+\begin{figure}[H]\centering\renderscreenshot{4-1}{screenshot-equipment-list.png}{设备列表页面}{equipment-list-page}\end{figure}

@@ -80,6 +80,14 @@ if [[ "${#jobs[@]}" -eq 0 ]]; then
 fi
 
 export PUPPETEER_SKIP_DOWNLOAD=true
+if [[ -z "${PUPPETEER_EXECUTABLE_PATH:-}" ]]; then
+  for browser in chromium chromium-browser google-chrome google-chrome-stable; do
+    if command -v "$browser" >/dev/null 2>&1; then
+      export PUPPETEER_EXECUTABLE_PATH="$(command -v "$browser")"
+      break
+    fi
+  done
+fi
 for source in "${jobs[@]}"; do
   base="$(basename "$source" .mmd)"
   target="$OUTPUT_DIR/$base.pdf"
@@ -89,7 +97,6 @@ for source in "${jobs[@]}"; do
     -o "$target" \
     -p "$PUPPETEER_CONFIG" \
     -c "$MERMAID_CONFIG" \
-    --pdfFit \
     --backgroundColor white; then
     message="Mermaid rendering failed: $source"
     if [[ "$ALLOW_FALLBACK" -eq 1 ]]; then
@@ -100,3 +107,4 @@ for source in "${jobs[@]}"; do
     fi
   fi
 done
+

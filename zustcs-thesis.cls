@@ -29,7 +29,8 @@
 \hypersetup{hidelinks}
 \sloppy
 \raggedbottom
-\IfFontExistsTF{Times New Roman}{\setmainfont{Times New Roman}}{\setmainfont{TeX Gyre Termes}}
+\IfFontExistsTF{Times New Roman}{\newcommand{\thesislatinfont}{Times New Roman}}{\IfFontExistsTF{TeX Gyre Termes}{\newcommand{\thesislatinfont}{TeX Gyre Termes}}{\newcommand{\thesislatinfont}{Latin Modern Roman}}}
+\setmainfont{\thesislatinfont}
 \IfFontExistsTF{SimSun}{\setCJKmainfont{SimSun}}{%
   \IfFontExistsTF{Songti SC}{\setCJKmainfont{Songti SC}}{%
     \IfFontExistsTF{Noto Serif CJK SC}{\setCJKmainfont{Noto Serif CJK SC}}{\setCJKmainfont{FandolSong-Regular}}%
@@ -46,7 +47,7 @@
   }%
 }
 
-\newcommand{\thesisHeaderText}{浙江科技大学计算机科学与技术学院2026届本科毕业设计（论文）}
+\newcommand{\thesisHeaderText}{浙江科技大学计算机科学与技术学院本科毕业设计（论文）}
 \newcommand{\setthesisheader}[1]{\renewcommand{\thesisHeaderText}{#1}}
 
 \newcommand{\setupthesisfancy}{%
@@ -118,9 +119,9 @@
 \renewcommand{\cftchapfont}{\heiti\zihao{-4}}
 \renewcommand{\cftsecfont}{\songti\zihao{-4}}
 \renewcommand{\cftsubsecfont}{\songti\zihao{-4}}
-\renewcommand{\cftchappagefont}{\fontspec{Times New Roman}\bfseries\zihao{-4}}
-\renewcommand{\cftsecpagefont}{\fontspec{Times New Roman}\zihao{-4}}
-\renewcommand{\cftsubsecpagefont}{\fontspec{Times New Roman}\zihao{-4}}
+\renewcommand{\cftchappagefont}{\fontspec{\thesislatinfont}\bfseries\zihao{-4}}
+\renewcommand{\cftsecpagefont}{\fontspec{\thesislatinfont}\zihao{-4}}
+\renewcommand{\cftsubsecpagefont}{\fontspec{\thesislatinfont}\zihao{-4}}
 \renewcommand{\cftchapleader}{\cftdotfill{\cftdotsep}}
 \renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
 \renewcommand{\cftsubsecleader}{\cftdotfill{\cftdotsep}}
@@ -267,7 +268,7 @@
     \thispagestyle{cover}
     \begin{center}
       \vspace*{1.05cm}
-      {\heiti\fontsize{36pt}{42pt}\selectfont 2026届本科毕业设计\par}
+      {\heiti\fontsize{36pt}{42pt}\selectfont 本科毕业设计\par}
       \vspace{1.25cm}
       \makebox[\textwidth][c]{%
         \begin{minipage}{14.25cm}
@@ -361,6 +362,6 @@
 }
 \makeatother
 \newcommand{\abstractparagraph}[1]{\par{\songti\zihao{-4}#1\par}}
-\newcommand{\enabstractparagraph}[1]{\par\fontspec{Times New Roman} #1\par}
+\newcommand{\enabstractparagraph}[1]{\par{\fontspec{\thesislatinfont}#1\par}}
 \newcommand{\keywords}[1]{\par\noindent{\heiti\zihao{-4}关键词：}\hspace{1em}{\songti\zihao{-4}#1}\par}
-\newcommand{\enkeywords}[1]{\par\noindent{\bfseries Keywords: }#1\par}
+\newcommand{\enkeywords}[1]{\par\noindent{\fontspec{\thesislatinfont}\bfseries Keywords: }{\fontspec{\thesislatinfont}#1}\par}

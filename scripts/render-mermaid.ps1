@@ -80,6 +80,18 @@ if ($null -eq $npx) {
 }
 
 $env:PUPPETEER_SKIP_DOWNLOAD = "true"
+if (-not $env:PUPPETEER_EXECUTABLE_PATH) {
+    foreach ($candidate in @(
+        "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+        "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
+        "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe"
+    )) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+            $env:PUPPETEER_EXECUTABLE_PATH = $candidate
+            break
+        }
+    }
+}
 foreach ($job in $jobs) {
     Write-Step "[mermaid] render: $($job.Source.Name) -> $([System.IO.Path]::GetFileName($job.Target))"
     & $npx.Source --yes "@mermaid-js/mermaid-cli" `
@@ -87,7 +99,6 @@ foreach ($job in $jobs) {
         -o $job.Target `
         -p $PuppeteerConfig `
         -c $MermaidConfig `
-        --pdfFit `
         --backgroundColor white
     if ($LASTEXITCODE -ne 0) {
         $message = "Mermaid rendering failed: $($job.Source.FullName)"
@@ -99,3 +110,4 @@ foreach ($job in $jobs) {
         }
     }
 }
+
